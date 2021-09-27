@@ -1,2 +1,2 @@
-# iroha2-transaction-signer
-docker image serving for util/testing purposes
+# iroha2-tools
+Scripts for Iroha2
