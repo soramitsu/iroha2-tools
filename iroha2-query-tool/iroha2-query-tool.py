@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import re
 
 from iroha2 import Client
 from iroha2.data_model import *
@@ -15,7 +16,8 @@ from iroha2.sys.iroha_data_model.query.transaction import FindTransactionsByAcco
 
 ACCOUNT_ASSETS_OPERATION = 'account_assets'
 ASSET_DETAILS_OPERATION = 'asset_details'
-LATEST_TRANSACTIONS = 'last_tx'
+LAST_TRANSACTIONS = 'last_tx'
+LATEST_BLOCK = 'latest_block'
 
 
 def parse_arguments():
@@ -30,8 +32,12 @@ def parse_arguments():
     parser_asset_details.add_argument('account_id', type=str, help='Account ID (account@domain)')
     parser_asset_details.add_argument('asset_id', type=str, help='Asset ID (token#domain)')
 
-    parser_latest_block = subparsers.add_parser(LATEST_TRANSACTIONS, help='Find last transactions by account id')
+    parser_last_tx = subparsers.add_parser(LAST_TRANSACTIONS, help='Find last transactions by account id')
+    parser_last_tx.add_argument('account_id', type=str, help='Account ID (account@domain)')
+
+    parser_latest_block = subparsers.add_parser(LATEST_BLOCK, help='Find latest block by account id')
     parser_latest_block.add_argument('account_id', type=str, help='Account ID (account@domain)')
+
     parser.add_argument('--public_key', type=str,
                         help='Change default public key')
     parser.add_argument('--private_key', type=str,
@@ -92,6 +98,13 @@ def find_transactions_by_account_id(account_id):
     )
 
 
+def parse_response(response):
+    try:
+        return eval(re.sub("([\'\"])?(\w+)([\'\"])?", r"'\2'", str(response)))
+    except Exception as ex:
+        raise
+
+
 if __name__ == '__main__':
     args = parse_arguments()
     cfg = json.loads(open("./config.json").read())
@@ -101,16 +114,28 @@ if __name__ == '__main__':
         cfg['PRIVATE_KEY']['payload'] = args.private_key
     iroha_client = Client(cfg)
 
+    response = ""
     try:
         if args.operation == ACCOUNT_ASSETS_OPERATION:
-            response = find_account_by_id(args.account_id)\
+            response = parse_response(find_account_by_id(args.account_id))\
                 .get('Identifiable', {}).get('Account', {}).get('assets', {})
         elif args.operation == ASSET_DETAILS_OPERATION:
-            response = find_asset_by_id(args.account_id, args.asset_id)
-        elif args.operation == LATEST_TRANSACTIONS:
-            response = find_transactions_by_account_id(args.account_id)
+            response = parse_response(find_asset_by_id(args.account_id, args.asset_id))
+        elif args.operation == LAST_TRANSACTIONS:
+            response = parse_response(find_transactions_by_account_id(args.account_id)).get('Vec', [])
+        elif args.operation == LATEST_BLOCK:
+            for tx in parse_response(find_transactions_by_account_id(args.account_id)).get('Vec', []):
+                last_block = tx.get('TransactionValue', {}).get('Transaction', {})
+                if last_block:
+                    response = last_block
+            if not response:
+                response = "No committed transactions for this account"
         else:
             response = "Operation doesn't exists"
-        print(response)
+
+        print(json.dumps(response, sort_keys=True, indent=2))
     except Exception as e:
-        print("Could not execute query", e)
+        print("Could not execute query: ", e)
+        raise
+
+
