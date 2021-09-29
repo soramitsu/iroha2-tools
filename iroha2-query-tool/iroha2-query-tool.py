@@ -35,10 +35,10 @@ def parse_arguments():
     parser_asset_details.add_argument('account_id', type=str, help='Account ID (account@domain)')
     parser_asset_details.add_argument('asset_id', type=str, help='Asset ID (token#domain)')
 
-    parser_last_tx = subparsers.add_parser(ALL_USER_TRANSACTIONS, help='Find last transactions by account id')
+    parser_last_tx = subparsers.add_parser(ALL_USER_TRANSACTIONS, help='Find transactions by account id')
     parser_last_tx.add_argument('account_id', type=str, help='Account ID (account@domain)')
 
-    parser_latest_block = subparsers.add_parser(LATEST_USER_TRANSACTION, help='Find latest block by account id')
+    parser_latest_block = subparsers.add_parser(LATEST_USER_TRANSACTION, help='Find latest transaction by account id')
     parser_latest_block.add_argument('account_id', type=str, help='Account ID (account@domain)')
 
     parser.add_argument('--public_key', type=str,
@@ -147,11 +147,14 @@ if __name__ == '__main__':
         elif args.operation == ALL_USER_TRANSACTIONS:
             response = parse_response(find_transactions_by_account_id(args.account_id)).get('Vec', [])
         elif args.operation == LATEST_USER_TRANSACTION:
+            txs = {}
             for tx in parse_response(find_transactions_by_account_id(args.account_id)).get('Vec', []):
-                last_block = tx.get('TransactionValue', {}).get('Transaction', {})
-                if last_block:
-                    response = last_block
-            if not response:
+                block = tx.get('TransactionValue', {}).get('Transaction', {})
+                if block:
+                    txs[int(block.get('creation_time', '0'))] = block
+            if txs:
+                response = txs[sorted(txs.keys())[-1]]
+            else:
                 response = "No committed transactions for this account"
         else:
             response = "Operation doesn't exists"
