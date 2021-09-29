@@ -4,7 +4,8 @@
 ```shell
 docker build -t iroha2-query-tool .
 ```
-Rebuild if script or config changed
+Rebuild if script or config changed.
+For mac os: add --platform=linux/amd64 parameter after `build`
 
 ## Run
 ```shell
@@ -23,8 +24,8 @@ positional arguments:
   {account_assets,asset_details,all_tx,last_tx}
     account_assets      Find account assets by account id
     asset_details       Find asset details by asset id
-    all_tx              Find last transactions by account id
-    last_tx             Find latest block by account id
+    all_tx              Find transactions by account id
+    last_tx             Find latest transaction by account id
 
 optional arguments:
   -h, --help            show this help message and exit
