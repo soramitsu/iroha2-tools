@@ -2,6 +2,9 @@
 import argparse
 import json
 import re
+import base64
+from urllib.parse import urlparse
+
 
 from iroha2 import Client
 from iroha2.data_model import *
@@ -16,8 +19,8 @@ from iroha2.sys.iroha_data_model.query.transaction import FindTransactionsByAcco
 
 ACCOUNT_ASSETS_OPERATION = 'account_assets'
 ASSET_DETAILS_OPERATION = 'asset_details'
-LAST_TRANSACTIONS = 'last_tx'
-LATEST_BLOCK = 'latest_block'
+ALL_USER_TRANSACTIONS = 'all_tx'
+LATEST_USER_TRANSACTION = 'last_tx'
 
 
 def parse_arguments():
@@ -32,10 +35,10 @@ def parse_arguments():
     parser_asset_details.add_argument('account_id', type=str, help='Account ID (account@domain)')
     parser_asset_details.add_argument('asset_id', type=str, help='Asset ID (token#domain)')
 
-    parser_last_tx = subparsers.add_parser(LAST_TRANSACTIONS, help='Find last transactions by account id')
+    parser_last_tx = subparsers.add_parser(ALL_USER_TRANSACTIONS, help='Find transactions by account id')
     parser_last_tx.add_argument('account_id', type=str, help='Account ID (account@domain)')
 
-    parser_latest_block = subparsers.add_parser(LATEST_BLOCK, help='Find latest block by account id')
+    parser_latest_block = subparsers.add_parser(LATEST_USER_TRANSACTION, help='Find latest transaction by account id')
     parser_latest_block.add_argument('account_id', type=str, help='Account ID (account@domain)')
 
     parser.add_argument('--public_key', type=str,
@@ -98,11 +101,29 @@ def find_transactions_by_account_id(account_id):
     )
 
 
+def extract_key():
+    return lambda exp: '{}"{}":'.format(exp.groups()[0], eval(exp.groups()[1])['definition_id']['name'])
+
+
 def parse_response(response):
     try:
-        return eval(re.sub("([\'\"])?(\w+)([\'\"])?", r"'\2'", str(response)))
+        dict_converted = re.sub("([\'\"])?([a-zA-Z0-9_\-.]+)([\'\"])?", r'"\2"', str(response)).replace('" "', ' ')
+        key_replaced = re.sub("([{,])({\"(definition|account).*?}):", extract_key(), dict_converted)
+        return eval(key_replaced)
     except Exception as ex:
         raise
+
+
+def parse_url_authorization(client, config):
+    url_parts = urlparse(args.iroha_url)
+    if url_parts.username and url_parts.password:
+        encoded_credentials = base64.b64encode("{}:{}".format(url_parts.username, url_parts.password).encode('ascii')) \
+            .decode('ascii')
+        client.headers = {"Authorization": "Basic " + str(encoded_credentials)}
+        url = "{}://{}".format(url_parts.scheme if url_parts.scheme else "http", url_parts.hostname)
+        if url_parts.port:
+            url += ":" + str(url_parts.port)
+        config['TORII_API_URL'] = url
 
 
 if __name__ == '__main__':
@@ -112,23 +133,28 @@ if __name__ == '__main__':
     if args.public_key and args.private_key:
         cfg['PUBLIC_KEY'] = args.public_key
         cfg['PRIVATE_KEY']['payload'] = args.private_key
+
     iroha_client = Client(cfg)
+    parse_url_authorization(iroha_client, cfg)
 
     response = ""
     try:
         if args.operation == ACCOUNT_ASSETS_OPERATION:
-            response = parse_response(find_account_by_id(args.account_id))\
+            response = parse_response(find_account_by_id(args.account_id)) \
                 .get('Identifiable', {}).get('Account', {}).get('assets', {})
         elif args.operation == ASSET_DETAILS_OPERATION:
             response = parse_response(find_asset_by_id(args.account_id, args.asset_id))
-        elif args.operation == LAST_TRANSACTIONS:
+        elif args.operation == ALL_USER_TRANSACTIONS:
             response = parse_response(find_transactions_by_account_id(args.account_id)).get('Vec', [])
-        elif args.operation == LATEST_BLOCK:
+        elif args.operation == LATEST_USER_TRANSACTION:
+            txs = {}
             for tx in parse_response(find_transactions_by_account_id(args.account_id)).get('Vec', []):
-                last_block = tx.get('TransactionValue', {}).get('Transaction', {})
-                if last_block:
-                    response = last_block
-            if not response:
+                block = tx.get('TransactionValue', {}).get('Transaction', {})
+                if block:
+                    txs[int(block.get('creation_time', '0'))] = block
+            if txs:
+                response = txs[sorted(txs.keys())[-1]]
+            else:
                 response = "No committed transactions for this account"
         else:
             response = "Operation doesn't exists"
