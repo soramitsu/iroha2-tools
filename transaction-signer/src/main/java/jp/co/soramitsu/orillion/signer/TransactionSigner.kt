@@ -1,8 +1,6 @@
 package jp.co.soramitsu.orillion.signer
 
 import jp.co.soramitsu.iroha2.appendSignatures
-import jp.co.soramitsu.iroha2.decode
-import jp.co.soramitsu.iroha2.encode
 import jp.co.soramitsu.iroha2.generated.datamodel.transaction.VersionedTransaction
 import jp.co.soramitsu.iroha2.keyPairFromHex
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable
@@ -30,11 +28,11 @@ class TransactionSigner {
             publicKey, privateKey,
             EdDSANamedCurveTable.getByName(EdDSANamedCurveTable.ED_25519)
         )
-        val decodedTransaction = transaction.decode(VersionedTransaction)
+        val decodedTransaction = transaction.let { VersionedTransaction.decode(it) }
         val signedTransaction = decodedTransaction.appendSignatures(keyPair)
         println("Signed transaction content: $signedTransaction")
 
-        val encoded = signedTransaction.encode(VersionedTransaction)
+        val encoded = signedTransaction.let{ VersionedTransaction.encode(it) }
         println("Signed transaction (Hex): ${Hex.toHexString(encoded)}")
     }
 
