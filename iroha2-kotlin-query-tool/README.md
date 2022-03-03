@@ -4,7 +4,7 @@
 Enter to iroha2-kotlin-query-tool directory
 
 ```
-gradle build
+./gradlew build
 docker build -t iroha2-query .
 ```
 
