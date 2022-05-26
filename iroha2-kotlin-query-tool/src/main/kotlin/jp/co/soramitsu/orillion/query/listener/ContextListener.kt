@@ -5,6 +5,7 @@ import jp.co.soramitsu.iroha2.asDomainId
 import jp.co.soramitsu.iroha2.asName
 import jp.co.soramitsu.iroha2.client.Iroha2Client
 import jp.co.soramitsu.iroha2.generated.datamodel.account.Id
+import jp.co.soramitsu.iroha2.generated.datamodel.asset.Mintable
 import jp.co.soramitsu.iroha2.privateKeyFromHex
 import jp.co.soramitsu.iroha2.publicKeyFromHex
 import jp.co.soramitsu.iroha2.query.QueryBuilder
@@ -88,12 +89,19 @@ class ContextListener(val config: Iroha2Config) : ApplicationListener<Applicatio
                             val assetMetadata = u.definition.metadata.map.entries.associate {
                                 it.key.string to it.value.toString()
                             }.toMap()
+
+                            val mintable = when (u.definition.mintable) {
+                                is Mintable.Infinitely -> "Infinitely"
+                                is Mintable.Not -> "Not"
+                                is Mintable.Once -> "Once"
+                            }
+
                             Asset(
                                 name = t.name.string,
                                 domainId = t.domainId.name.string,
                                 valueType = u.definition.valueType.toString(),
                                 metadata = assetMetadata,
-                                mintable = u.definition.mintable
+                                mintable = mintable
                             )
                         }
                         Domain(
