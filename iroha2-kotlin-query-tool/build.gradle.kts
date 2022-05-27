@@ -23,6 +23,11 @@ dependencies {
 	val i2pCryptoEddsa by System.getProperties()
 	val bouncyCastleVer by System.getProperties()
 	val multihashVersion by System.getProperties()
+	val coroutinesVer by System.getProperties()
+
+	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVer")
+	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:$coroutinesVer")
+
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")

@@ -5,5 +5,5 @@ data class Asset(
     val domainId: String,
     val valueType: String,
     val metadata: Map<String, String>,
-    val mintable: Boolean
+    val mintable: String
 )
