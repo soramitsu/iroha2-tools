@@ -5,6 +5,7 @@ import jp.co.soramitsu.iroha2.generated.datamodel.transaction.VersionedTransacti
 import jp.co.soramitsu.iroha2.keyPairFromHex
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable
 import org.bouncycastle.util.encoders.Hex
+import java.io.File
 
 class TransactionSigner {
 
@@ -39,5 +40,10 @@ class TransactionSigner {
 }
 
 fun main(args: Array<String>) {
-    TransactionSigner().sign(args)
+    val file = File("/env/env.txt")
+    var envArgs = args
+    if (file.isFile) {
+        envArgs = file.readText().split(",").toTypedArray()
+    }
+    TransactionSigner().sign(envArgs)
 }
