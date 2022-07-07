@@ -1,0 +1,97 @@
+{
+  "transactions": [
+    {
+      "isi": [
+        {
+          "Register": {
+            "object": {
+              "Raw": {
+                "Identifiable": {
+                  "NewDomain": {
+                    "id": {
+                      "name": "wonderland"
+                    },
+                    "logo": null,
+                    "metadata": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "Register": {
+            "object": {
+              "Raw": {
+                "Identifiable": {
+                  "NewAccount": {
+                    "id": {
+                      "name": "alice",
+                      "domain_id": {
+                        "name": "wonderland"
+                      }
+                    },
+                    "signatories": [
+                      "ed0120ce31629c9f44aac7bd3c043f0eca904b016ac95306ae285828f6f8903f7aa9ad"
+                    ],
+                    "metadata": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "Register": {
+            "object": {
+              "Raw": {
+                "Identifiable": {
+                  "NewAssetDefinition": {
+                    "id": {
+                      "name": "rose",
+                      "domain_id": {
+                        "name": "wonderland"
+                      }
+                    },
+                    "value_type": "Quantity",
+                    "mintable": "Infinitely",
+                    "metadata": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "Mint": {
+            "object": {
+              "Raw": {
+                "U32": 13
+              }
+            },
+            "destination_id": {
+              "Raw": {
+                "Id": {
+                  "AssetId": {
+                    "definition_id": {
+                      "name": "rose",
+                      "domain_id": {
+                        "name": "wonderland"
+                      }
+                    },
+                    "account_id": {
+                      "name": "alice",
+                      "domain_id": {
+                        "name": "wonderland"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
