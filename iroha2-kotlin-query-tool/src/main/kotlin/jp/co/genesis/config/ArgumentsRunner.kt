@@ -1,4 +1,4 @@
-package jp.co.soramitsu.orillion.query.config
+package jp.co.genesis.config
 
 import org.springframework.boot.CommandLineRunner
 import org.springframework.stereotype.Component

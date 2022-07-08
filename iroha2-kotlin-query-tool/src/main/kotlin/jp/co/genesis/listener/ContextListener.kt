@@ -1,4 +1,4 @@
-package jp.co.soramitsu.orillion.query.listener
+package jp.co.genesis.listener
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import jp.co.soramitsu.iroha2.asDomainId
@@ -10,13 +10,13 @@ import jp.co.soramitsu.iroha2.privateKeyFromHex
 import jp.co.soramitsu.iroha2.publicKeyFromHex
 import jp.co.soramitsu.iroha2.query.QueryBuilder
 import jp.co.soramitsu.iroha2.toHex
-import jp.co.soramitsu.orillion.query.config.Iroha2Config
-import jp.co.soramitsu.orillion.query.model.Account
-import jp.co.soramitsu.orillion.query.model.AccountAsset
-import jp.co.soramitsu.orillion.query.model.Asset
-import jp.co.soramitsu.orillion.query.model.Domain
-import jp.co.soramitsu.orillion.query.model.PermissionToken
-import jp.co.soramitsu.orillion.query.model.Signature
+import jp.co.genesis.config.Iroha2Config
+import jp.co.genesis.model.Account
+import jp.co.genesis.model.AccountAsset
+import jp.co.genesis.model.Asset
+import jp.co.genesis.model.Domain
+import jp.co.genesis.model.PermissionToken
+import jp.co.genesis.model.Signature
 import kotlinx.coroutines.runBlocking
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.ApplicationListener

@@ -13,14 +13,19 @@ repositories {
     maven(url = "https://jitpack.io")
 }
 
+tasks.test {
+    useJUnitPlatform()
+}
+
 dependencies {
     val iroha2Ver by System.getProperties()
+    val kotlinVer by System.getProperties()
 
     implementation("org.apache.commons:commons-csv:1.8")
 
 //    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVer")
 //    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:$coroutinesVer")
-//
+
 //    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 //    implementation("org.jetbrains.kotlin:kotlin-reflect")
 //    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
@@ -30,6 +35,10 @@ dependencies {
     api("com.github.hyperledger.iroha-java:client:$iroha2Ver")
     implementation("com.github.hyperledger.iroha-java:model:$iroha2Ver")
     implementation("com.github.hyperledger.iroha-java:block:$iroha2Ver")
+
+    testImplementation("com.github.hyperledger.iroha-java:testcontainers:$iroha2Ver")
+    testImplementation("com.github.hyperledger.iroha-java:test-tools:$iroha2Ver")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVer")
 
     // crypto
     implementation("net.i2p.crypto:eddsa:0.3.0")
