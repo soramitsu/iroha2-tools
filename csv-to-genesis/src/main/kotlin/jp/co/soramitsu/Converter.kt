@@ -6,6 +6,7 @@ import jp.co.soramitsu.iroha2.asDomainId
 import jp.co.soramitsu.iroha2.asName
 import jp.co.soramitsu.iroha2.asValue
 import jp.co.soramitsu.iroha2.cast
+import jp.co.soramitsu.iroha2.client.Iroha2Client
 import jp.co.soramitsu.iroha2.generateKeyPair
 import jp.co.soramitsu.iroha2.generated.core.genesis.GenesisTransaction
 import jp.co.soramitsu.iroha2.generated.core.genesis.RawGenesisBlock
@@ -17,20 +18,24 @@ import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetValueType
 import jp.co.soramitsu.iroha2.generated.datamodel.isi.Instruction
 import jp.co.soramitsu.iroha2.toIrohaPublicKey
 import jp.co.soramitsu.iroha2.transaction.Instructions
+import jp.co.soramitsu.iroha2.transaction.TransactionBuilder
+import kotlinx.coroutines.delay
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import org.apache.commons.csv.CSVRecord
 import java.io.File
 import java.math.BigInteger
+import java.net.URL
+import java.security.KeyPair
 import java.text.SimpleDateFormat
 import java.time.Duration
 import java.util.*
 
 class Converter {
     companion object {
-        private val DOMAIN_ID = "some_domain".asDomainId()
-        private val ADMIN_ID = AccountId("some_admin".asName(), DOMAIN_ID)
-        private val ADMIN_KEYPAIR = generateKeyPair()
+        val DOMAIN_ID = "some_domain".asDomainId()
+        val ADMIN_ID = AccountId("some_admin".asName(), DOMAIN_ID)
+        val ADMIN_KEYPAIR = generateKeyPair()
 
         private val ID = "id".asName() to 0
         private val FRAUD_TYPE = "ft".asName() to 12
@@ -43,19 +48,17 @@ class Converter {
         val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
     }
 
-    fun convert(csv: File, genesis: File): Genesis {
-        val node = JSON_SERDE.readTree(genesis)
-        val block = JSON_SERDE.convertValue(node, RawGenesisBlock::class.java)
-        val txs = block.transactions.cast<MutableList<GenesisTransaction>>()
-
-        listOf(
+    suspend fun sendToIroha(csv: File, peerUrl: URL, admin: AccountId, keyPair: KeyPair) {
+        val client = Iroha2Client(peerUrl, true)
+        client.send(
             Instructions.registerDomain(DOMAIN_ID),
             Instructions.registerAccount(
                 ADMIN_ID, listOf(ADMIN_KEYPAIR.public.toIrohaPublicKey())
-            )
-        ).let { isi ->
-            GenesisTransaction(isi)
-        }.let { tx -> txs.add(tx) }
+            ),
+            account = admin,
+            keyPair = keyPair
+        )
+        delay(1000)
 
         csv.bufferedReader().use { reader ->
             val parser = CSVParser(
@@ -63,13 +66,37 @@ class Converter {
                     .withFirstRecordAsHeader()
                     .withSkipHeaderRecord()
             )
-            parser.forEach { txs.add(GenesisTransaction(it.mapToAssetIsi())) }
+            parser.forEach {
+                client.send(*it.mapToAssetIsi().toTypedArray())
+            }
+        }
+    }
+
+    fun toGenesis(csv: File, genesis: File): Genesis {
+        val node = JSON_SERDE.readTree(genesis)
+        val block = JSON_SERDE.convertValue(node, RawGenesisBlock::class.java)
+        val txs = block.transactions.cast<MutableList<GenesisTransaction>>()
+
+        csv.bufferedReader().use { reader ->
+            val parser = CSVParser(
+                reader, CSVFormat.DEFAULT
+                    .withFirstRecordAsHeader()
+                    .withSkipHeaderRecord()
+            )
+            val isi = mutableListOf<Instruction>(
+                Instructions.registerDomain(DOMAIN_ID),
+                Instructions.registerAccount(
+                    ADMIN_ID, listOf(ADMIN_KEYPAIR.public.toIrohaPublicKey())
+                )
+            )
+            parser.forEach { isi.addAll(it.mapToAssetIsi()) }
+            txs.add(GenesisTransaction(isi))
         }
 
         return Genesis(RawGenesisBlock(txs))
     }
 
-    private fun CSVRecord.mapToAssetIsi(): List<Instruction> {
+    private fun CSVRecord.mapToAssetIsi(): ArrayList<Instruction> {
         val isi = mutableListOf<Instruction>()
 
         val id = this.get(ID.second)
@@ -96,7 +123,20 @@ class Converter {
 
         Instructions.grantSetKeyValueAsset(assetId, ADMIN_ID).also { isi.add(it) }
 
-        return isi
+        return ArrayList(isi)
+    }
+
+    private suspend fun Iroha2Client.send(
+        vararg isi: Instruction,
+        account: AccountId = ADMIN_ID,
+        keyPair: KeyPair = ADMIN_KEYPAIR
+    ) = TransactionBuilder {
+        account(account)
+        this.instructions.value.addAll(isi)
+    }.let { builder ->
+        this.fireAndForget {
+            builder.buildSigned(keyPair)
+        }
     }
 }
 

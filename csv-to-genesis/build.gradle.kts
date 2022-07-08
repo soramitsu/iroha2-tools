@@ -23,13 +23,8 @@ dependencies {
 
     implementation("org.apache.commons:commons-csv:1.8")
 
-//    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVer")
-//    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:$coroutinesVer")
-
-//    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-//    implementation("org.jetbrains.kotlin:kotlin-reflect")
-//    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-//    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.0")
 
     // iroha2
     api("com.github.hyperledger.iroha-java:client:$iroha2Ver")
