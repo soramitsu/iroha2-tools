@@ -67,7 +67,12 @@ class Converter {
                     .withSkipHeaderRecord()
             )
             parser.forEach {
-                client.send(*it.mapToAssetIsi().toTypedArray())
+                client.send(
+                    *it.mapToAssetIsi().toTypedArray(),
+                    account = admin,
+                    keyPair = keyPair
+                )
+                println("#${it.get(0)} saved")
             }
         }
     }
