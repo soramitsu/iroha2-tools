@@ -2,12 +2,10 @@ package jp.co.soramitsu
 
 import jp.co.soramitsu.iroha2.Genesis
 import jp.co.soramitsu.iroha2.JSON_SERDE
-import jp.co.soramitsu.iroha2.asDomainId
 import jp.co.soramitsu.iroha2.asName
 import jp.co.soramitsu.iroha2.asValue
 import jp.co.soramitsu.iroha2.cast
 import jp.co.soramitsu.iroha2.client.Iroha2Client
-import jp.co.soramitsu.iroha2.generateKeyPair
 import jp.co.soramitsu.iroha2.generated.core.genesis.GenesisTransaction
 import jp.co.soramitsu.iroha2.generated.core.genesis.RawGenesisBlock
 import jp.co.soramitsu.iroha2.generated.datamodel.Name
@@ -16,10 +14,8 @@ import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetDefinitionId
 import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetId
 import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetValueType
 import jp.co.soramitsu.iroha2.generated.datamodel.isi.Instruction
-import jp.co.soramitsu.iroha2.toIrohaPublicKey
 import jp.co.soramitsu.iroha2.transaction.Instructions
 import jp.co.soramitsu.iroha2.transaction.TransactionBuilder
-import kotlinx.coroutines.delay
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import org.apache.commons.csv.CSVRecord
@@ -33,10 +29,6 @@ import java.util.*
 
 class Converter {
     companion object {
-        val DOMAIN_ID = "some_domain".asDomainId()
-        val ADMIN_ID = AccountId("some_admin".asName(), DOMAIN_ID)
-        val ADMIN_KEYPAIR = generateKeyPair()
-
         private val ID = "id".asName() to 0
         private val FRAUD_TYPE = "ft".asName() to 12
         private val ORIGINATION = "org".asName() to 4
@@ -50,16 +42,6 @@ class Converter {
 
     suspend fun sendToIroha(csv: File, peerUrl: URL, admin: AccountId, keyPair: KeyPair) {
         val client = Iroha2Client(peerUrl, true)
-        client.send(
-            Instructions.registerDomain(DOMAIN_ID),
-            Instructions.registerAccount(
-                ADMIN_ID, listOf(ADMIN_KEYPAIR.public.toIrohaPublicKey())
-            ),
-            account = admin,
-            keyPair = keyPair
-        )
-        delay(1000)
-
         csv.bufferedReader().use { reader ->
             val parser = CSVParser(
                 reader, CSVFormat.DEFAULT
@@ -68,7 +50,7 @@ class Converter {
             )
             parser.forEach {
                 client.send(
-                    *it.mapToAssetIsi().toTypedArray(),
+                    *it.mapToAssetIsi(admin).toTypedArray(),
                     account = admin,
                     keyPair = keyPair
                 )
@@ -77,7 +59,7 @@ class Converter {
         }
     }
 
-    fun toGenesis(csv: File, genesis: File): Genesis {
+    fun toGenesis(csv: File, genesis: File, admin: AccountId): Genesis {
         val node = JSON_SERDE.readTree(genesis)
         val block = JSON_SERDE.convertValue(node, RawGenesisBlock::class.java)
         val txs = block.transactions.cast<MutableList<GenesisTransaction>>()
@@ -88,25 +70,20 @@ class Converter {
                     .withFirstRecordAsHeader()
                     .withSkipHeaderRecord()
             )
-            val isi = mutableListOf<Instruction>(
-                Instructions.registerDomain(DOMAIN_ID),
-                Instructions.registerAccount(
-                    ADMIN_ID, listOf(ADMIN_KEYPAIR.public.toIrohaPublicKey())
-                )
-            )
-            parser.forEach { isi.addAll(it.mapToAssetIsi()) }
+            val isi = mutableListOf<Instruction>()
+            parser.forEach { isi.addAll(it.mapToAssetIsi(admin)) }
             txs.add(GenesisTransaction(isi))
         }
 
         return Genesis(RawGenesisBlock(txs))
     }
 
-    private fun CSVRecord.mapToAssetIsi(): ArrayList<Instruction> {
+    private fun CSVRecord.mapToAssetIsi(accountId: AccountId): ArrayList<Instruction> {
         val isi = mutableListOf<Instruction>()
 
         val id = this.get(ID.second)
-        val definitionId = AssetDefinitionId(id.asName(), DOMAIN_ID)
-        val assetId = AssetId(definitionId, ADMIN_ID)
+        val definitionId = AssetDefinitionId(id.asName(), accountId.domainId)
+        val assetId = AssetId(definitionId, accountId)
 
         Instructions.registerAsset(definitionId, AssetValueType.Store())
             .also { isi.add(it) }
@@ -126,15 +103,15 @@ class Converter {
             .let { date -> Instructions.setKeyValue(assetId, EXPIRY_DATE.first, date) }
             .also { isi.add(it) }
 
-        Instructions.grantSetKeyValueAsset(assetId, ADMIN_ID).also { isi.add(it) }
+        Instructions.grantSetKeyValueAsset(assetId, accountId).also { isi.add(it) }
 
         return ArrayList(isi)
     }
 
     private suspend fun Iroha2Client.send(
         vararg isi: Instruction,
-        account: AccountId = ADMIN_ID,
-        keyPair: KeyPair = ADMIN_KEYPAIR
+        account: AccountId,
+        keyPair: KeyPair
     ) = TransactionBuilder {
         account(account)
         this.instructions.value.addAll(isi)
