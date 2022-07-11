@@ -29,33 +29,39 @@ import java.util.*
 
 class Converter {
     companion object {
-        private val ID = "id".asName() to 0
-        private val FRAUD_TYPE = "ft".asName() to 12
+        private val ID = "id".asName() to 7
+        private val FRAUD_TYPE = "ft".asName() to -1
         private val ORIGINATION = "org".asName() to 4
         private val DESTINATION = "dst".asName() to 5
         private val STATUS = "sts".asName() to 14
         private val TIMESTAMP = "ts".asName() to 1
         private val EXPIRY_DATE = "ed".asName() to TIMESTAMP.second
 
-        val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        private const val WANGIRI_FRAUD_TYPE = 0
+
+        internal val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
     }
 
     suspend fun sendToIroha(csv: File, peerUrl: URL, admin: AccountId, keyPair: KeyPair) {
         val client = Iroha2Client(peerUrl, true)
+        val isi = mutableListOf<Instruction>()
+
         csv.bufferedReader().use { reader ->
-            val parser = CSVParser(
+            CSVParser(
                 reader, CSVFormat.DEFAULT
                     .withFirstRecordAsHeader()
                     .withSkipHeaderRecord()
-            )
-            parser.forEach {
-                client.send(
-                    *it.mapToAssetIsi(admin).toTypedArray(),
-                    account = admin,
-                    keyPair = keyPair
-                )
-                println("#${it.get(0)} saved")
+            ).forEachIndexed { id, record ->
+                isi.addAll(record.mapToAssetIsi(admin))
+                if (id % 100 == 0) {
+                    client.send(*isi.toTypedArray(), account = admin, keyPair = keyPair)
+                    isi.clear()
+                }
             }
+        }
+
+        if (isi.isNotEmpty()) {
+            client.send(*isi.toTypedArray(), account = admin, keyPair = keyPair)
         }
     }
 
@@ -81,16 +87,17 @@ class Converter {
     private fun CSVRecord.mapToAssetIsi(accountId: AccountId): ArrayList<Instruction> {
         val isi = mutableListOf<Instruction>()
 
-        val id = this.get(ID.second)
-        val definitionId = AssetDefinitionId(id.asName(), accountId.domainId)
+        val definitionId = AssetDefinitionId(this.get(0).asName(), accountId.domainId)
         val assetId = AssetId(definitionId, accountId)
 
         Instructions.registerAsset(definitionId, AssetValueType.Store())
             .also { isi.add(it) }
-        Instructions.setKeyValue(definitionId, ID.first, id.asValue())
+        "+${this.get(ID.second)}-+${this.get(ID.second + 1)}"
+            .let { id -> Instructions.setKeyValue(definitionId, ID.first, id.asValue()) }
+            .also { isi.add(it) }
+        Instructions.setKeyValue(assetId, FRAUD_TYPE.first, WANGIRI_FRAUD_TYPE.asValue())
             .also { isi.add(it) }
 
-        this.toSkvIsi<Long>(assetId, FRAUD_TYPE).also { isi.add(it) }
         this.toSkvIsi<String>(assetId, ORIGINATION).also { isi.add(it) }
         this.toSkvIsi<String>(assetId, DESTINATION).also { isi.add(it) }
         this.toSkvIsi<Long>(assetId, STATUS).also { isi.add(it) }

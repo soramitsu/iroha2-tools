@@ -1,10 +1,10 @@
-## CSV-TO-GENESIS
+## CSV-DATA_MIGRATION
 
 ### Usage
 You have to run app with some arguments in strict order
 
 Example:
-1. csv-to-genesis/src/main/resources/example.csv **(Path to csv file with data)**
+1. csv-data-migration/src/test/resources/example.csv **(Path to csv file with data)**
 2. http://127.0.0.1:8080 **(Peer URL)**
 3. alice **(Admin name)**
 4. wonderland **(Domain name)**
