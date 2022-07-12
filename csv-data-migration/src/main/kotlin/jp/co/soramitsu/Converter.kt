@@ -42,16 +42,22 @@ class Converter {
         internal val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
     }
 
-    suspend fun sendToIroha(csv: File, peerUrl: URL, admin: AccountId, keyPair: KeyPair) {
-        val client = Iroha2Client(peerUrl, true)
+    suspend fun sendToIroha(
+        csv: File,
+        peerUrl: URL,
+        admin: AccountId,
+        keyPair: KeyPair,
+        credentials: String
+    ) {
+        val client = Iroha2Client(peerUrl, log = true, credentials = credentials)
         val isi = mutableListOf<Instruction>()
 
         csv.bufferedReader().use { reader ->
-            CSVParser(
-                reader, CSVFormat.DEFAULT
-                    .withFirstRecordAsHeader()
-                    .withSkipHeaderRecord()
-            ).forEachIndexed { id, record ->
+            val format = CSVFormat.DEFAULT
+                .withFirstRecordAsHeader()
+                .withSkipHeaderRecord()
+
+            CSVParser(reader, format).forEachIndexed { id, record ->
                 isi.addAll(record.mapToAssetIsi(admin))
                 if (id % 100 == 0) {
                     client.send(*isi.toTypedArray(), account = admin, keyPair = keyPair)
@@ -72,7 +78,8 @@ class Converter {
 
         csv.bufferedReader().use { reader ->
             val parser = CSVParser(
-                reader, CSVFormat.DEFAULT
+                reader,
+                CSVFormat.DEFAULT
                     .withFirstRecordAsHeader()
                     .withSkipHeaderRecord()
             )
