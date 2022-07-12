@@ -3,7 +3,7 @@ plugins {
     id 'maven'
 }
 
-group 'jp.co.soramitsu.orillion'
+group 'jp.co.soramitsu.signer'
 version '1.0-SNAPSHOT'
 
 repositories {
@@ -50,7 +50,7 @@ test {
 
 jar {
     manifest {
-        attributes 'Main-Class': 'jp.co.soramitsu.orillion.signer.TransactionSignerKt'
+        attributes 'Main-Class': 'jp.co.soramitsu.signer.TransactionSignerKt'
     }
 
     // This line of code recursively collects and copies all of a project's files
