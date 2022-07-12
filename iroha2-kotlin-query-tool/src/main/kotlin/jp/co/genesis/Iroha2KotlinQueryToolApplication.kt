@@ -1,4 +1,4 @@
-package jp.co.soramitsu.orillion.query
+package jp.co.genesis
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication

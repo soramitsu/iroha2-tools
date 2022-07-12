@@ -1,4 +1,4 @@
-package jp.co.soramitsu.orillion.query.model
+package jp.co.genesis.model
 
 data class Signature(
     val publicKeyHex: String

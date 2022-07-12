@@ -1,6 +1,6 @@
-package jp.co.soramitsu.orillion.query.proxy
+package jp.co.genesis.proxy
 
-import jp.co.soramitsu.orillion.query.config.Iroha2Config
+import jp.co.genesis.config.Iroha2Config
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
