@@ -1,4 +1,4 @@
-package jp.co.soramitsu.orillion.signer
+package jp.co.soramitsu.signer
 
 import jp.co.soramitsu.iroha2.appendSignatures
 import jp.co.soramitsu.iroha2.generated.datamodel.transaction.VersionedTransaction
