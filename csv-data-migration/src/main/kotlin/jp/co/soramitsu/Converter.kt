@@ -8,19 +8,21 @@ import jp.co.soramitsu.iroha2.cast
 import jp.co.soramitsu.iroha2.client.Iroha2Client
 import jp.co.soramitsu.iroha2.generated.core.genesis.GenesisTransaction
 import jp.co.soramitsu.iroha2.generated.core.genesis.RawGenesisBlock
-import jp.co.soramitsu.iroha2.generated.datamodel.Name
+import jp.co.soramitsu.iroha2.generated.datamodel.Value
 import jp.co.soramitsu.iroha2.generated.datamodel.account.AccountId
 import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetDefinitionId
 import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetId
+import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetValue
 import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetValueType
 import jp.co.soramitsu.iroha2.generated.datamodel.isi.Instruction
+import jp.co.soramitsu.iroha2.generated.datamodel.name.Name
+import jp.co.soramitsu.iroha2.query.QueryBuilder
 import jp.co.soramitsu.iroha2.transaction.Instructions
 import jp.co.soramitsu.iroha2.transaction.TransactionBuilder
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import org.apache.commons.csv.CSVRecord
 import java.io.File
-import java.math.BigInteger
 import java.net.URL
 import java.security.KeyPair
 import java.text.SimpleDateFormat
@@ -47,7 +49,7 @@ class Converter {
         peerUrl: URL,
         admin: AccountId,
         keyPair: KeyPair,
-        credentials: String
+        credentials: String? = null
     ) {
         val client = Iroha2Client(peerUrl, log = true, credentials = credentials)
         val isi = mutableListOf<Instruction>()
@@ -94,13 +96,13 @@ class Converter {
     private fun CSVRecord.mapToAssetIsi(accountId: AccountId): ArrayList<Instruction> {
         val isi = mutableListOf<Instruction>()
 
-        val definitionId = AssetDefinitionId(this.get(0).asName(), accountId.domainId)
+        val id = "+${this.get(ID.second)}-+${this.get(ID.second + 1)}"
+        val definitionId = AssetDefinitionId(id.asName(), accountId.domainId)
         val assetId = AssetId(definitionId, accountId)
 
         Instructions.registerAsset(definitionId, AssetValueType.Store())
             .also { isi.add(it) }
-        "+${this.get(ID.second)}-+${this.get(ID.second + 1)}"
-            .let { id -> Instructions.setKeyValue(definitionId, ID.first, id.asValue()) }
+        Instructions.setKeyValue(assetId, ID.first, id.asValue())
             .also { isi.add(it) }
         Instructions.setKeyValue(assetId, FRAUD_TYPE.first, WANGIRI_FRAUD_TYPE.asValue())
             .also { isi.add(it) }
@@ -142,21 +144,15 @@ private inline fun <reified T> CSVRecord.toSkvIsi(
 ) = this.get(type.second).let { v ->
     when (T::class) {
         Long::class -> v.toLong()
-        Date::class -> Converter.dateFormatter.parse(v).toInstant().epochSecond
+        Date::class ->
+            Converter.dateFormatter
+                .parse(v)
+                .toInstant()
+                .epochSecond.toString()
         else -> v
     }
 }.asValue().let { value ->
     Instructions.setKeyValue(assetId, type.first, value)
-}
-
-// todo move to Iroha SDK
-fun <T> T.asValue() = when (this) {
-    is String -> this.asValue()
-    is Long -> this.asValue()
-    is Int -> this.asValue()
-    is BigInteger -> this.asValue()
-    is Boolean -> this.asValue()
-    else -> throw RuntimeException("Unsupported type")
 }
 
 fun Date.toEpochSeconds(plus: Duration? = null) = this
