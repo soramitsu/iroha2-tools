@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.io.File
+import kotlin.test.assertEquals
 
 @Timeout(300)
 class Tests : IrohaTest<Iroha2Client>() {
@@ -43,7 +44,7 @@ class Tests : IrohaTest<Iroha2Client>() {
         )
 
         delay(5000)
-        client.checkAssetsSize(653)
+        client.checkAssetsSize(553) // unique assets
     }
 
     private fun startContainer(genesis: Genesis): IrohaContainer {
@@ -57,6 +58,6 @@ class Tests : IrohaTest<Iroha2Client>() {
             .account(ALICE_ACCOUNT_ID)
             .buildSigned(ALICE_KEYPAIR)
             .let { this.sendQuery(it) }
-            .also { assert(it.size == size) }
+            .also { assertEquals(it.size, size) }
     }
 }

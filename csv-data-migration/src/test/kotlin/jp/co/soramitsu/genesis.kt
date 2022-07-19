@@ -23,7 +23,7 @@ open class DefaultGenesis : Genesis(
                     Instructions.registerDomain(DEFAULT_DOMAIN_ID),
                     Instructions.registerAccount(
                         ALICE_ACCOUNT_ID,
-                        listOf(ALICE_KEYPAIR.public.toIrohaPublicKey()),
+                        listOf(ALICE_KEYPAIR.public.toIrohaPublicKey())
                     )
                 )
             )
