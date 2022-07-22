@@ -105,7 +105,7 @@ class Converter {
         val isi = mutableListOf<Instruction>()
 
         val id = "+${this.get(ID.second)}-+${this.get(ID.second + 1)}"
-        val definitionId = AssetDefinitionId(id.asName(), accountId.domainId)
+        val definitionId = AssetDefinitionId("${UUID.randomUUID()}_$id".asName(), accountId.domainId)
         val assetId = AssetId(definitionId, accountId)
 
         Instructions.registerAsset(definitionId, AssetValueType.Store())
