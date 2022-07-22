@@ -14,6 +14,7 @@ import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetId
 import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetValueType
 import jp.co.soramitsu.iroha2.generated.datamodel.isi.Instruction
 import jp.co.soramitsu.iroha2.generated.datamodel.name.Name
+import jp.co.soramitsu.iroha2.query.QueryBuilder
 import jp.co.soramitsu.iroha2.transaction.Instructions
 import jp.co.soramitsu.iroha2.transaction.TransactionBuilder
 import org.apache.commons.csv.CSVFormat
@@ -60,6 +61,7 @@ class Converter {
                 isi.addAll(record.mapToAssetIsi(admin))
                 if (id % 100 == 0) {
                     client.send(*isi.toTypedArray(), account = admin, keyPair = keyPair)
+                    println("${isi.size / 9} ASSETS HAVE BEEN CREATED")
                     isi.clear()
                 }
             }
@@ -67,6 +69,15 @@ class Converter {
 
         if (isi.isNotEmpty()) {
             client.send(*isi.toTypedArray(), account = admin, keyPair = keyPair)
+            println("${isi.size / 9} ASSETS HAVE BEEN CREATED\n")
+        }
+
+        client.sendQuery(
+            QueryBuilder.findAllAssets()
+                .account(admin)
+                .buildSigned(keyPair)
+        ).also { result ->
+            println("${result.size} ASSETS IN TOTAL\n")
         }
     }
 
