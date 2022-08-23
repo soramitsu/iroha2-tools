@@ -14,7 +14,6 @@ repositories {
 dependencies {
     // Iroha 2
     compile "com.github.hyperledger.iroha-java:client:$iroha2Ver"
-    compile "com.github.hyperledger.iroha-java:model:$iroha2Ver"
 }
 
 compileKotlin {
