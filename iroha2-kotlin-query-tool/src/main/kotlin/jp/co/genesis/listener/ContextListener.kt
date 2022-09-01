@@ -1,15 +1,6 @@
 package jp.co.genesis.listener
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import jp.co.soramitsu.iroha2.asDomainId
-import jp.co.soramitsu.iroha2.asName
-import jp.co.soramitsu.iroha2.client.Iroha2Client
-import jp.co.soramitsu.iroha2.generated.datamodel.account.Id
-import jp.co.soramitsu.iroha2.generated.datamodel.asset.Mintable
-import jp.co.soramitsu.iroha2.privateKeyFromHex
-import jp.co.soramitsu.iroha2.publicKeyFromHex
-import jp.co.soramitsu.iroha2.query.QueryBuilder
-import jp.co.soramitsu.iroha2.toHex
 import jp.co.genesis.config.Iroha2Config
 import jp.co.genesis.model.Account
 import jp.co.genesis.model.AccountAsset
@@ -17,6 +8,15 @@ import jp.co.genesis.model.Asset
 import jp.co.genesis.model.Domain
 import jp.co.genesis.model.PermissionToken
 import jp.co.genesis.model.Signature
+import jp.co.soramitsu.iroha2.asDomainId
+import jp.co.soramitsu.iroha2.asName
+import jp.co.soramitsu.iroha2.client.Iroha2Client
+import jp.co.soramitsu.iroha2.generated.datamodel.account.AccountId
+import jp.co.soramitsu.iroha2.generated.datamodel.asset.Mintable
+import jp.co.soramitsu.iroha2.privateKeyFromHex
+import jp.co.soramitsu.iroha2.publicKeyFromHex
+import jp.co.soramitsu.iroha2.query.QueryBuilder
+import jp.co.soramitsu.iroha2.toHex
 import kotlinx.coroutines.runBlocking
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.ApplicationListener
@@ -37,11 +37,16 @@ class ContextListener(val config: Iroha2Config) : ApplicationListener<Applicatio
         try {
             val iroha2Client = Iroha2Client(config.proxyUrl, log = true)
             val tokens = config.adminAccount.split(config.accountDelimiter)
-            val adminAccount = Id(tokens[0].asName(), tokens[1].asDomainId())
+            val adminAccount = AccountId(tokens[0].asName(), tokens[1].asDomainId())
 
             QueryBuilder.findAllDomains()
                 .account(adminAccount)
-                .buildSigned(KeyPair(publicKeyFromHex(config.adminPublicKeyHex), privateKeyFromHex(config.adminPrivateKeyHex)))
+                .buildSigned(
+                    KeyPair(
+                        publicKeyFromHex(config.adminPublicKeyHex),
+                        privateKeyFromHex(config.adminPrivateKeyHex)
+                    )
+                )
                 .let { query ->
                     runBlocking {
                         iroha2Client.sendQuery(query)
