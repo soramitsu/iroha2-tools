@@ -11,6 +11,7 @@ import jp.co.soramitsu.iroha2.toIrohaPublicKey
 import jp.co.soramitsu.iroha2.transaction.Instructions
 
 val DEFAULT_DOMAIN_ID = "wonderland".asDomainId()
+val CONTRIBUTION_DOMAIN_ID = "contribution".asDomainId()
 val ALICE_ACCOUNT_NAME = "alice".asName()
 val ALICE_ACCOUNT_ID = AccountId(ALICE_ACCOUNT_NAME, DEFAULT_DOMAIN_ID)
 val ALICE_KEYPAIR = generateKeyPair()
@@ -21,6 +22,7 @@ open class DefaultGenesis : Genesis(
             GenesisTransaction(
                 listOf(
                     Instructions.registerDomain(DEFAULT_DOMAIN_ID),
+                    Instructions.registerDomain(CONTRIBUTION_DOMAIN_ID),
                     Instructions.registerAccount(
                         ALICE_ACCOUNT_ID,
                         listOf(ALICE_KEYPAIR.public.toIrohaPublicKey())

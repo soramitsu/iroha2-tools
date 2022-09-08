@@ -2,6 +2,7 @@ package jp.co.soramitsu
 
 import jp.co.soramitsu.iroha2.Genesis
 import jp.co.soramitsu.iroha2.JSON_SERDE
+import jp.co.soramitsu.iroha2.asDomainId
 import jp.co.soramitsu.iroha2.asName
 import jp.co.soramitsu.iroha2.asValue
 import jp.co.soramitsu.iroha2.cast
@@ -35,6 +36,8 @@ class Converter {
         private val STATUS = "sts".asName() to 14
         private val TIMESTAMP = "ts".asName() to 1
         private val EXPIRY_DATE = "ed".asName() to TIMESTAMP.second
+
+        private val CONTRIBUTION_DOMAIN_ID = "contribution".asDomainId()
 
         private const val WANGIRI_FRAUD_TYPE = 0
 
@@ -94,7 +97,8 @@ class Converter {
         val isi = mutableListOf<Instruction>()
 
         val id = "+${this.get(ID.second)}-+${this.get(ID.second + 1)}"
-        val definitionId = AssetDefinitionId(id.asName(), accountId.domainId)
+        val definitionId = AssetDefinitionId(id.asName(), CONTRIBUTION_DOMAIN_ID)
+
         val assetId = AssetId(definitionId, accountId)
 
         Instructions.registerAsset(definitionId, AssetValueType.Store())
@@ -146,6 +150,7 @@ private inline fun <reified T> CSVRecord.toSkvIsi(
                 .parse(v)
                 .toInstant()
                 .epochSecond.toString()
+
         else -> v
     }
 }.asValue().let { value ->
