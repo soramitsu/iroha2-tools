@@ -8,6 +8,7 @@ import jp.co.soramitsu.iroha2.generated.datamodel.trigger.TriggerId
 import jp.co.soramitsu.iroha2.keyPairFromHex
 import jp.co.soramitsu.iroha2.query.QueryBuilder
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import java.io.File
 import java.net.URL
 import java.security.KeyPair
@@ -70,6 +71,10 @@ private suspend fun Iroha2Client.update(
                     trigger.action.filter
                 )
                 buildSigned(keyPair)
+            }.also {
+                withTimeout(30000) {
+                    it.await()
+                }
             }.let { id }
         }
     }.flatten()
