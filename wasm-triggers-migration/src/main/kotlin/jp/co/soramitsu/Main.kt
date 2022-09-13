@@ -46,7 +46,7 @@ private suspend fun Iroha2Client.update(
 
     val idsValues = triggerIds.map { it.name.string }
     val wasmFileNames = wasmFiles.map { it.key.removeSuffix(".wasm") }
-    if (!wasmFileNames.all { n -> idsValues.contains(n) }) {
+    if (!wasmFileNames.all { n -> idsValues.any { id -> id.startsWith(n) } }) {
         throw RuntimeException("Found triggers: $idsValues, provided files: $wasmFileNames")
     }
 
