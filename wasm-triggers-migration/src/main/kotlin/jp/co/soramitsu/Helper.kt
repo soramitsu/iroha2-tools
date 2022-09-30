@@ -46,7 +46,7 @@ class Helper(private val client: Iroha2Client) {
                         trigger.id,
                         file.value.readBytes(),
                         trigger.action.repeats,
-                        trigger.action.technicalAccount,,
+                        trigger.action.technicalAccount,
                         trigger.action.metadata,
                         trigger.action.filter
                     )
