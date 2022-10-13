@@ -6,7 +6,6 @@ import jp.co.genesis.model.Account
 import jp.co.genesis.model.AccountAsset
 import jp.co.genesis.model.Asset
 import jp.co.genesis.model.Domain
-import jp.co.genesis.model.PermissionToken
 import jp.co.genesis.model.Signature
 import jp.co.soramitsu.iroha2.asDomainId
 import jp.co.soramitsu.iroha2.asName
@@ -68,15 +67,7 @@ class ContextListener(val config: Iroha2Config) : ApplicationListener<Applicatio
                             val accountMetadata = u.metadata.map.entries.associate {
                                 it.key.string to it.value.toString()
                             }.toMap()
-                            val permissionTokens = u.permissionTokens.map { token ->
-                                val params = token.params.entries.associate {
-                                    it.key.string to it.value.toString()
-                                }.toMap()
-                                PermissionToken(
-                                    name = token.name.string,
-                                    params = params
-                                )
-                            }
+
                             Account(
                                 name = t.name.string,
                                 id = u.id.name.string,
@@ -84,7 +75,7 @@ class ContextListener(val config: Iroha2Config) : ApplicationListener<Applicatio
                                 assets = accountAssets,
                                 signatories = accountSignatories,
                                 metadata = accountMetadata,
-                                permissionTokens = permissionTokens
+                                roles = u.roles.map { it.name.string }
                             )
                         }
                         val domainMetadata = domain.metadata.map.entries.associate {

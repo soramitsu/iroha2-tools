@@ -7,5 +7,5 @@ data class Account(
     val assets: List<AccountAsset>,
     val signatories: List<Signature>,
     val metadata: Map<String, String>,
-    val permissionTokens: List<PermissionToken>
+    val roles: List<String>
 )
