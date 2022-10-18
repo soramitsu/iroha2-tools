@@ -26,17 +26,16 @@ class TransactionSigner {
         }
 
         val keyPair = keyPairFromHex(
-            publicKey, privateKey,
+            publicKey,
+            privateKey,
             EdDSANamedCurveTable.getByName(EdDSANamedCurveTable.ED_25519)
         )
         val decodedTransaction = transaction.let { VersionedTransaction.decode(it) }
         val signedTransaction = decodedTransaction.appendSignatures(keyPair)
-        println("Signed transaction content: $signedTransaction")
 
-        val encoded = signedTransaction.let{ VersionedTransaction.encode(it) }
+        val encoded = signedTransaction.let { VersionedTransaction.encode(it) }
         println("Signed transaction (Hex): ${Hex.toHexString(encoded)}")
     }
-
 }
 
 fun main(args: Array<String>) {
