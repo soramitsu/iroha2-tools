@@ -11,9 +11,10 @@ import jp.co.soramitsu.iroha2.generated.core.genesis.GenesisTransaction
 import jp.co.soramitsu.iroha2.generated.core.genesis.RawGenesisBlock
 import jp.co.soramitsu.iroha2.generated.datamodel.account.AccountId
 import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetId
-import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetValueType
+import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetValue
 import jp.co.soramitsu.iroha2.generated.datamodel.asset.DefinitionId
 import jp.co.soramitsu.iroha2.generated.datamodel.isi.Instruction
+import jp.co.soramitsu.iroha2.generated.datamodel.metadata.Metadata
 import jp.co.soramitsu.iroha2.generated.datamodel.name.Name
 import jp.co.soramitsu.iroha2.transaction.Instructions
 import jp.co.soramitsu.iroha2.transaction.TransactionBuilder
@@ -98,7 +99,7 @@ class Converter {
 
         val assetId = AssetId(definitionId, accountId)
 
-        Instructions.registerAssetDefinition(definitionId, AssetValueType.Store())
+        Instructions.registerAsset(assetId, AssetValue.Store(Metadata(mapOf())))
             .also { isi.add(it) }
         Instructions.setKeyValue(assetId, ID.first, id.asValue())
             .also { isi.add(it) }
