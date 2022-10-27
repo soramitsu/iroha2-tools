@@ -21,7 +21,6 @@ import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import org.apache.commons.csv.CSVRecord
 import java.io.File
-import java.net.URL
 import java.security.KeyPair
 import java.text.SimpleDateFormat
 import java.time.Duration
@@ -45,13 +44,11 @@ class Converter {
     }
 
     suspend fun sendToIroha(
+        client: Iroha2Client,
         csv: File,
-        peerUrl: URL,
         admin: AccountId,
-        keyPair: KeyPair,
-        credentials: String? = null
+        keyPair: KeyPair
     ) {
-        val client = Iroha2Client(peerUrl, log = true, credentials = credentials)
         val isi = mutableListOf<Instruction>()
 
         csv.bufferedReader().use { reader ->
