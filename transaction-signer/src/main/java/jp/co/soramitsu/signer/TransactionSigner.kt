@@ -32,7 +32,6 @@ class TransactionSigner {
         )
         val decodedTransaction = transaction.let { VersionedSignedTransaction.decode(it) }
         val signedTransaction = decodedTransaction.appendSignatures(keyPair)
-        println("Signed transaction content: $signedTransaction")
 
         val encoded = signedTransaction.let { VersionedSignedTransaction.encode(it) }
         println("Signed transaction (Hex): ${Hex.toHexString(encoded)}")
