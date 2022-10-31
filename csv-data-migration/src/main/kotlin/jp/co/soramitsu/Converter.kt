@@ -19,6 +19,7 @@ import jp.co.soramitsu.iroha2.generated.datamodel.metadata.Metadata
 import jp.co.soramitsu.iroha2.generated.datamodel.name.Name
 import jp.co.soramitsu.iroha2.transaction.Instructions
 import jp.co.soramitsu.iroha2.transaction.TransactionBuilder
+import kotlinx.coroutines.withTimeout
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import org.apache.commons.csv.CSVRecord
@@ -60,7 +61,7 @@ class Converter {
 
             CSVParser(reader, format).forEachIndexed { id, record ->
                 isi.addAll(record.mapToAssetIsi(admin))
-                if (id % 100 == 0) {
+                if (id % 100 == 0 && id != 0) {
                     client.send(*isi.toTypedArray(), account = admin, keyPair = keyPair)
                     isi.clear()
                 }
@@ -95,7 +96,7 @@ class Converter {
     private fun CSVRecord.mapToAssetIsi(accountId: AccountId): ArrayList<Instruction> {
         val isi = mutableListOf<Instruction>()
 
-        val id = "+${this.get(ID.second)}-+${this.get(ID.second + 1)}"
+        val id = "+${this.get(ID.second)}-+${this.get(ID.second + 1)}_${System.currentTimeMillis()}"
         val definitionId = DefinitionId(id.asName(), CONTRIBUTION_DOMAIN_ID)
 
         val assetId = AssetId(definitionId, accountId)
@@ -104,7 +105,6 @@ class Converter {
             .also { isi.add(it) }
         Instructions.registerAsset(assetId, AssetValue.Store(Metadata(mapOf())))
             .also { isi.add(it) }
-            .also { println("REGISTERED ASSET_ID: $assetId") }
         Instructions.setKeyValue(assetId, ID.first, id.asValue())
             .also { isi.add(it) }
         Instructions.setKeyValue(assetId, FRAUD_TYPE.first, WANGIRI_FRAUD_TYPE.asValue())
@@ -138,6 +138,8 @@ class Converter {
         this.sendTransaction {
             builder.buildSigned(keyPair)
         }
+    }.also {
+        withTimeout(10000) { it.await() }
     }
 }
 
