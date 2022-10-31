@@ -14,22 +14,15 @@ import java.net.URL
 fun main(vararg args: String): Unit = runBlocking {
     val converter = Converter()
     val client = Iroha2Client(URL(args[1]), log = true)
-    val admin = AccountId(args[2].asName(), args[3].asDomainId())
-    val keyPair = keyPairFromHex(args[4], args[5])
+    val admin = AccountId(args[2].asName(), args[3].asDomainId()) // transactions send behalf of this account
+    val keyPair = keyPairFromHex(args[4], args[5]) // key pair to sign transactions
 
-    repeat(1) {
-        converter.sendToIroha(
-            client,
-            File(args[0]), // csv
-            admin, // transactions send behalf of this account
-            keyPairFromHex(args[4], args[5]) // key pair to sign transactions
-        )
-    }
+    converter.sendToIroha(client, File(args[0]), admin, keyPair)
 
     delay(1000)
     QueryBuilder.findAllAssets()
         .account(admin)
         .buildSigned(keyPair)
         .let { client.sendQuery(it) }
-        .also { println(it.size) }
+        .also { println("\n\nFOUND ${it.size} ASSETS\n\n") }
 }

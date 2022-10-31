@@ -12,6 +12,7 @@ import jp.co.soramitsu.iroha2.generated.core.genesis.RawGenesisBlock
 import jp.co.soramitsu.iroha2.generated.datamodel.account.AccountId
 import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetId
 import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetValue
+import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetValueType
 import jp.co.soramitsu.iroha2.generated.datamodel.asset.DefinitionId
 import jp.co.soramitsu.iroha2.generated.datamodel.isi.Instruction
 import jp.co.soramitsu.iroha2.generated.datamodel.metadata.Metadata
@@ -99,8 +100,11 @@ class Converter {
 
         val assetId = AssetId(definitionId, accountId)
 
+        Instructions.registerAssetDefinition(definitionId, AssetValueType.Store())
+            .also { isi.add(it) }
         Instructions.registerAsset(assetId, AssetValue.Store(Metadata(mapOf())))
             .also { isi.add(it) }
+            .also { println("REGISTERED ASSET_ID: $assetId") }
         Instructions.setKeyValue(assetId, ID.first, id.asValue())
             .also { isi.add(it) }
         Instructions.setKeyValue(assetId, FRAUD_TYPE.first, WANGIRI_FRAUD_TYPE.asValue())
@@ -131,7 +135,7 @@ class Converter {
         account(account)
         this.instructions.value.addAll(isi)
     }.let { builder ->
-        this.fireAndForget {
+        this.sendTransaction {
             builder.buildSigned(keyPair)
         }
     }
