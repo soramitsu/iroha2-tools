@@ -63,6 +63,7 @@ class Converter {
                 isi.addAll(record.mapToAssetIsi(admin))
                 if (id % 100 == 0 && id != 0) {
                     client.send(*isi.toTypedArray(), account = admin, keyPair = keyPair)
+                    println("BUNCH HAVE BEEN SENT")
                     isi.clear()
                 }
             }
