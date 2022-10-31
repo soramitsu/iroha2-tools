@@ -10,9 +10,9 @@ import jp.co.soramitsu.iroha2.client.Iroha2Client
 import jp.co.soramitsu.iroha2.generated.core.genesis.GenesisTransaction
 import jp.co.soramitsu.iroha2.generated.core.genesis.RawGenesisBlock
 import jp.co.soramitsu.iroha2.generated.datamodel.account.AccountId
-import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetDefinitionId
 import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetId
 import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetValueType
+import jp.co.soramitsu.iroha2.generated.datamodel.asset.DefinitionId
 import jp.co.soramitsu.iroha2.generated.datamodel.isi.Instruction
 import jp.co.soramitsu.iroha2.generated.datamodel.name.Name
 import jp.co.soramitsu.iroha2.transaction.Instructions
@@ -97,11 +97,11 @@ class Converter {
         val isi = mutableListOf<Instruction>()
 
         val id = "+${this.get(ID.second)}-+${this.get(ID.second + 1)}"
-        val definitionId = AssetDefinitionId(id.asName(), CONTRIBUTION_DOMAIN_ID)
+        val definitionId = DefinitionId(id.asName(), CONTRIBUTION_DOMAIN_ID)
 
         val assetId = AssetId(definitionId, accountId)
 
-        Instructions.registerAsset(definitionId, AssetValueType.Store())
+        Instructions.registerAssetDefinition(definitionId, AssetValueType.Store())
             .also { isi.add(it) }
         Instructions.setKeyValue(assetId, ID.first, id.asValue())
             .also { isi.add(it) }
