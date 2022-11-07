@@ -33,19 +33,24 @@ import java.util.*
 class Converter {
     companion object {
         private val ID = "id".asName() to 7
-        private val FRAUD_TYPE = "ft".asName() to -1
+        private val FRAUD_TYPE = "ft".asName() to 2
+        private val FRAUD_VALUE = "fv".asName() to 3
         private val ORIGINATION = "org".asName() to 4
         private val DESTINATION = "dst".asName() to 5
-        private val STATUS = "sts".asName() to 14
-        private val TIMESTAMP = "ts".asName() to 1
+        private val TIMESTAMP = "ts".asName() to 6
         private val EXPIRY_DATE = "ed".asName() to TIMESTAMP.second
+        private val STATUS = "sts".asName() to 8
+        private val CONFIDENCE_INDEX = "ci".asName() to 13
 
         private val CONTRIBUTION_DOMAIN_ID = "contribution".asDomainId()
 
-        private const val WANGIRI_FRAUD_TYPE = 0
-        private const val BUNCH_SIZE = 100
+        private const val BUNCH_SIZE = 50
 
         internal val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+
+        private val csvFormat = CSVFormat.DEFAULT
+            .withFirstRecordAsHeader()
+            .withSkipHeaderRecord()
     }
 
     suspend fun sendToIroha(
@@ -59,12 +64,9 @@ class Converter {
         val isi = mutableListOf<Instruction>()
 
         csv.bufferedReader().use { reader ->
-            val format = CSVFormat.DEFAULT
-                .withFirstRecordAsHeader()
-                .withSkipHeaderRecord()
-
-            CSVParser(reader, format).forEachIndexed { id, record ->
+            CSVParser(reader, csvFormat).forEachIndexed { id, record ->
                 isi.addAll(record.mapToAssetIsi(admin))
+                println("ID: $id")
                 if (id % BUNCH_SIZE == 0 && id != 0) {
                     client.send(*isi.toTypedArray(), account = admin, keyPair = keyPair)
                     println("$BUNCH_SIZE HAVE BEEN SENT")
@@ -84,13 +86,9 @@ class Converter {
         val txs = block.transactions.cast<MutableList<GenesisTransaction>>()
 
         csv.bufferedReader().use { reader ->
-            val parser = CSVParser(
-                reader,
-                CSVFormat.DEFAULT
-                    .withFirstRecordAsHeader()
-                    .withSkipHeaderRecord()
-            )
+            val parser = CSVParser(reader, csvFormat)
             val isi = mutableListOf<Instruction>()
+
             parser.forEach { isi.addAll(it.mapToAssetIsi(admin)) }
             txs.add(GenesisTransaction(isi))
         }
@@ -101,9 +99,8 @@ class Converter {
     private fun CSVRecord.mapToAssetIsi(accountId: AccountId): ArrayList<Instruction> {
         val isi = mutableListOf<Instruction>()
 
-        val id = "+${this.get(ID.second)}-+${this.get(ID.second + 1)}_${System.currentTimeMillis()}"
-        val definitionId = DefinitionId(id.asName(), CONTRIBUTION_DOMAIN_ID)
-
+        val id = this.getId()
+        val definitionId = DefinitionId("${id}_${UUID.randomUUID()}".asName(), CONTRIBUTION_DOMAIN_ID)
         val assetId = AssetId(definitionId, accountId)
 
         Instructions.registerAssetDefinition(definitionId, AssetValueType.Store())
@@ -112,13 +109,13 @@ class Converter {
             .also { isi.add(it) }
         Instructions.setKeyValue(assetId, ID.first, id.asValue())
             .also { isi.add(it) }
-        Instructions.setKeyValue(assetId, FRAUD_TYPE.first, WANGIRI_FRAUD_TYPE.asValue())
-            .also { isi.add(it) }
 
-        this.toSkvIsi<String>(assetId, ORIGINATION).also { isi.add(it) }
-        this.toSkvIsi<String>(assetId, DESTINATION).also { isi.add(it) }
-        this.toSkvIsi<Long>(assetId, STATUS).also { isi.add(it) }
-        this.toSkvIsi<Date>(assetId, TIMESTAMP).also { isi.add(it) }
+        this.toSkvIsi<String>(assetId, FRAUD_TYPE)?.also { isi.add(it) }
+        this.toSkvIsi<String>(assetId, ORIGINATION)?.also { isi.add(it) }
+        this.toSkvIsi<String>(assetId, DESTINATION)?.also { isi.add(it) }
+        this.toSkvIsi<Long>(assetId, STATUS)?.also { isi.add(it) }
+        this.toSkvIsi<Date>(assetId, TIMESTAMP)?.also { isi.add(it) }
+        this.toSkvIsi<Long>(assetId, CONFIDENCE_INDEX)?.also { isi.add(it) }
 
         dateFormatter
             .parse(this.get(EXPIRY_DATE.second))
@@ -130,6 +127,13 @@ class Converter {
         Instructions.grantSetKeyValueAsset(assetId, accountId).also { isi.add(it) }
 
         return ArrayList(isi)
+    }
+
+    private fun CSVRecord.getId() = when (
+        val id = this.get(ID.second)
+    ) {
+        "NULL" -> this.get(FRAUD_VALUE.second)
+        else -> id.replace("#${CONTRIBUTION_DOMAIN_ID.name.string}", "")
     }
 
     private suspend fun Iroha2Client.send(
@@ -153,7 +157,7 @@ private inline fun <reified T> CSVRecord.toSkvIsi(
     type: Pair<Name, Int>
 ) = this.get(type.second).let { v ->
     when (T::class) {
-        Long::class -> v.toLong()
+        Long::class -> v.toLongOrNull()
         Date::class ->
             Converter.dateFormatter
                 .parse(v)
@@ -162,7 +166,7 @@ private inline fun <reified T> CSVRecord.toSkvIsi(
 
         else -> v
     }
-}.asValue().let { value ->
+}?.asValue()?.let { value ->
     Instructions.setKeyValue(assetId, type.first, value)
 }
 

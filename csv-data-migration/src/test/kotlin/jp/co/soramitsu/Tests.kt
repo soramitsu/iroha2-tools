@@ -41,8 +41,7 @@ class Tests : IrohaTest<Iroha2Client>() {
             ALICE_ACCOUNT_ID,
             ALICE_KEYPAIR
         )
-
-        client.checkAssetsSize(653) // unique assets
+        client.checkAssetsSize(233)
     }
 
     private fun startContainer(genesis: Genesis): IrohaContainer {
