@@ -24,6 +24,7 @@ import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import org.apache.commons.csv.CSVRecord
 import java.io.File
+import java.net.URL
 import java.security.KeyPair
 import java.text.SimpleDateFormat
 import java.time.Duration
@@ -42,16 +43,19 @@ class Converter {
         private val CONTRIBUTION_DOMAIN_ID = "contribution".asDomainId()
 
         private const val WANGIRI_FRAUD_TYPE = 0
+        private const val BUNCH_SIZE = 100
 
         internal val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
     }
 
     suspend fun sendToIroha(
-        client: Iroha2Client,
         csv: File,
+        peerUrl: URL,
         admin: AccountId,
-        keyPair: KeyPair
+        keyPair: KeyPair,
+        credentials: String? = null
     ) {
+        val client = Iroha2Client(peerUrl, log = true, credentials = credentials)
         val isi = mutableListOf<Instruction>()
 
         csv.bufferedReader().use { reader ->
@@ -61,9 +65,9 @@ class Converter {
 
             CSVParser(reader, format).forEachIndexed { id, record ->
                 isi.addAll(record.mapToAssetIsi(admin))
-                if (id % 100 == 0 && id != 0) {
+                if (id % BUNCH_SIZE == 0 && id != 0) {
                     client.send(*isi.toTypedArray(), account = admin, keyPair = keyPair)
-                    println("BUNCH HAVE BEEN SENT")
+                    println("$BUNCH_SIZE HAVE BEEN SENT")
                     isi.clear()
                 }
             }
