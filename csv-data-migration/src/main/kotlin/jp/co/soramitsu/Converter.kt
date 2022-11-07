@@ -11,17 +11,19 @@ import jp.co.soramitsu.iroha2.generated.core.genesis.GenesisTransaction
 import jp.co.soramitsu.iroha2.generated.core.genesis.RawGenesisBlock
 import jp.co.soramitsu.iroha2.generated.datamodel.account.AccountId
 import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetId
+import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetValue
 import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetValueType
 import jp.co.soramitsu.iroha2.generated.datamodel.asset.DefinitionId
 import jp.co.soramitsu.iroha2.generated.datamodel.isi.Instruction
+import jp.co.soramitsu.iroha2.generated.datamodel.metadata.Metadata
 import jp.co.soramitsu.iroha2.generated.datamodel.name.Name
 import jp.co.soramitsu.iroha2.transaction.Instructions
 import jp.co.soramitsu.iroha2.transaction.TransactionBuilder
+import kotlinx.coroutines.withTimeout
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import org.apache.commons.csv.CSVRecord
 import java.io.File
-import java.net.URL
 import java.security.KeyPair
 import java.text.SimpleDateFormat
 import java.time.Duration
@@ -45,13 +47,11 @@ class Converter {
     }
 
     suspend fun sendToIroha(
+        client: Iroha2Client,
         csv: File,
-        peerUrl: URL,
         admin: AccountId,
-        keyPair: KeyPair,
-        credentials: String? = null
+        keyPair: KeyPair
     ) {
-        val client = Iroha2Client(peerUrl, log = true, credentials = credentials)
         val isi = mutableListOf<Instruction>()
 
         csv.bufferedReader().use { reader ->
@@ -61,8 +61,9 @@ class Converter {
 
             CSVParser(reader, format).forEachIndexed { id, record ->
                 isi.addAll(record.mapToAssetIsi(admin))
-                if (id % 100 == 0) {
+                if (id % 100 == 0 && id != 0) {
                     client.send(*isi.toTypedArray(), account = admin, keyPair = keyPair)
+                    println("BUNCH HAVE BEEN SENT")
                     isi.clear()
                 }
             }
@@ -96,12 +97,14 @@ class Converter {
     private fun CSVRecord.mapToAssetIsi(accountId: AccountId): ArrayList<Instruction> {
         val isi = mutableListOf<Instruction>()
 
-        val id = "+${this.get(ID.second)}-+${this.get(ID.second + 1)}"
+        val id = "+${this.get(ID.second)}-+${this.get(ID.second + 1)}_${System.currentTimeMillis()}"
         val definitionId = DefinitionId(id.asName(), CONTRIBUTION_DOMAIN_ID)
 
         val assetId = AssetId(definitionId, accountId)
 
         Instructions.registerAssetDefinition(definitionId, AssetValueType.Store())
+            .also { isi.add(it) }
+        Instructions.registerAsset(assetId, AssetValue.Store(Metadata(mapOf())))
             .also { isi.add(it) }
         Instructions.setKeyValue(assetId, ID.first, id.asValue())
             .also { isi.add(it) }
@@ -133,9 +136,11 @@ class Converter {
         account(account)
         this.instructions.value.addAll(isi)
     }.let { builder ->
-        this.fireAndForget {
+        this.sendTransaction {
             builder.buildSigned(keyPair)
         }
+    }.also {
+        withTimeout(10000) { it.await() }
     }
 }
 
