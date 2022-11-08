@@ -110,15 +110,16 @@ class Converter {
             .also { isi.add(it) }
         Instructions.setKeyValue(assetId, ID.first, id.asValue())
             .also { isi.add(it) }
-        this.get(FRAUD_TYPE.second).fraudTypeCode().asValue()
-            .let { Instructions.setKeyValue(assetId, FRAUD_TYPE.first, it) }
-            .also { isi.add(it) }
-        this.get(CONFIDENCE_INDEX.second).toLongOrNull()
-            ?.toBigDecimal()?.divide(BigDecimal(100))
-            ?.let { fraction.multiply(it, context).toInt() }
-            ?.asValue()
-            ?.let { value -> Instructions.setKeyValue(assetId, CONFIDENCE_INDEX.first, value) }
-            ?.also { isi.add(it) }
+
+        this.toSkvIsi(assetId, FRAUD_TYPE) { v: String ->
+            v.fraudTypeCode()
+        }?.also { isi.add(it) }
+
+        this.toSkvIsi(assetId, CONFIDENCE_INDEX) { v: String ->
+            v.toLongOrNull()
+                ?.toBigDecimal()?.divide(BigDecimal(100))
+                ?.let { fraction.multiply(it, context).toInt() }
+        }?.also { isi.add(it) }
 
         this.toSkvIsi<String>(assetId, ORIGINATION)?.also { isi.add(it) }
         this.toSkvIsi<String>(assetId, DESTINATION)?.also { isi.add(it) }
@@ -163,8 +164,14 @@ class Converter {
 private inline fun <reified T> CSVRecord.toSkvIsi(
     assetId: AssetId,
     type: Pair<Name, Int>
+) = this.toSkvIsi<T, Unit>(assetId, type)
+
+private inline fun <reified T, reified R> CSVRecord.toSkvIsi(
+    assetId: AssetId,
+    type: Pair<Name, Int>,
+    noinline conversion: ((T) -> R)? = null
 ) = this.get(type.second).let { v ->
-    when (T::class) {
+    when (R::class) {
         Long::class -> v.toLongOrNull()
         Date::class ->
             Converter.dateFormatter
@@ -173,6 +180,8 @@ private inline fun <reified T> CSVRecord.toSkvIsi(
                 .epochSecond.toString()
         else -> v
     }
+}?.let { value ->
+    conversion?.let { it(value.cast()) }
 }?.asValue()?.let { value ->
     Instructions.setKeyValue(assetId, type.first, value)
 }
