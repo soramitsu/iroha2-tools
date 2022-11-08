@@ -66,7 +66,6 @@ class Converter {
         csv.bufferedReader().use { reader ->
             CSVParser(reader, csvFormat).forEachIndexed { id, record ->
                 isi.addAll(record.mapToAssetIsi(admin))
-                println("ID: $id")
                 if (id % BUNCH_SIZE == 0 && id != 0) {
                     client.send(*isi.toTypedArray(), account = admin, keyPair = keyPair)
                     println("$BUNCH_SIZE HAVE BEEN SENT")

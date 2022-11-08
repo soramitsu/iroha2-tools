@@ -28,7 +28,7 @@ class Tests : IrohaTest<Iroha2Client>() {
         )
         startContainer(genesis).use { container ->
             Iroha2Client(container.getApiUrl())
-                .checkAssetsSize(653)
+                .checkAssetsSize(233)
         }
     }
 
