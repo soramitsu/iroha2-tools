@@ -51,6 +51,8 @@ class Converter {
         private val csvFormat = CSVFormat.DEFAULT
             .withFirstRecordAsHeader()
             .withSkipHeaderRecord()
+
+        private var assetCounter = 0
     }
 
     suspend fun sendToIroha(
@@ -99,7 +101,7 @@ class Converter {
         val isi = mutableListOf<Instruction>()
 
         val id = this.getId()
-        val definitionId = DefinitionId("${id}_${UUID.randomUUID()}".asName(), CONTRIBUTION_DOMAIN_ID)
+        val definitionId = DefinitionId("${id}_${assetCounter++}".asName(), CONTRIBUTION_DOMAIN_ID)
         val assetId = AssetId(definitionId, accountId)
 
         Instructions.registerAssetDefinition(definitionId, AssetValueType.Store())
