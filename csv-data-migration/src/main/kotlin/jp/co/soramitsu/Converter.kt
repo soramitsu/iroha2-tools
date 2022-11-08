@@ -106,8 +106,9 @@ class Converter {
             .also { isi.add(it) }
         Instructions.setKeyValue(assetId, ID.first, id.asValue())
             .also { isi.add(it) }
+        Instructions.setKeyValue(assetId, FRAUD_TYPE.first, this.get(FRAUD_TYPE.second).fraudTypeCode().asValue())
+            .also { isi.add(it) }
 
-        this.toSkvIsi<String>(assetId, FRAUD_TYPE)?.also { isi.add(it) }
         this.toSkvIsi<String>(assetId, ORIGINATION)?.also { isi.add(it) }
         this.toSkvIsi<String>(assetId, DESTINATION)?.also { isi.add(it) }
         this.toSkvIsi<Long>(assetId, STATUS)?.also { isi.add(it) }
@@ -125,6 +126,8 @@ class Converter {
 
         return ArrayList(isi)
     }
+
+    private fun String.fraudTypeCode() = FraudType.valueOf(this).code
 
     private fun CSVRecord.getId() = when (
         val id = this.get(ID.second)
