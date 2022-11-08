@@ -24,6 +24,8 @@ import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import org.apache.commons.csv.CSVRecord
 import java.io.File
+import java.math.BigDecimal
+import java.math.MathContext
 import java.net.URL
 import java.security.KeyPair
 import java.text.SimpleDateFormat
@@ -44,13 +46,15 @@ class Converter {
 
         private val CONTRIBUTION_DOMAIN_ID = "contribution".asDomainId()
 
-        private const val BUNCH_SIZE = 50
-
-        internal val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-
+        private val context: MathContext = MathContext.DECIMAL64
+        private val fraction = BigDecimal(1_000_000_000, context)
         private val csvFormat = CSVFormat.DEFAULT
             .withFirstRecordAsHeader()
             .withSkipHeaderRecord()
+
+        private const val BUNCH_SIZE = 50
+
+        internal val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
 
         private var assetCounter = 0
     }
@@ -110,14 +114,20 @@ class Converter {
             .also { isi.add(it) }
         Instructions.setKeyValue(assetId, ID.first, id.asValue())
             .also { isi.add(it) }
-        Instructions.setKeyValue(assetId, FRAUD_TYPE.first, this.get(FRAUD_TYPE.second).fraudTypeCode().asValue())
+        this.get(FRAUD_TYPE.second).fraudTypeCode().asValue()
+            .let { Instructions.setKeyValue(assetId, FRAUD_TYPE.first, it) }
             .also { isi.add(it) }
+        this.get(CONFIDENCE_INDEX.second).toLongOrNull()
+            ?.toBigDecimal()?.divide(BigDecimal(100))
+            ?.let { fraction.multiply(it, context).toInt() }
+            ?.asValue()
+            ?.let { value -> Instructions.setKeyValue(assetId, CONFIDENCE_INDEX.first, value) }
+            ?.also { isi.add(it) }
 
         this.toSkvIsi<String>(assetId, ORIGINATION)?.also { isi.add(it) }
         this.toSkvIsi<String>(assetId, DESTINATION)?.also { isi.add(it) }
         this.toSkvIsi<Long>(assetId, STATUS)?.also { isi.add(it) }
         this.toSkvIsi<Date>(assetId, TIMESTAMP)?.also { isi.add(it) }
-        this.toSkvIsi<Long>(assetId, CONFIDENCE_INDEX)?.also { isi.add(it) }
 
         dateFormatter
             .parse(this.get(EXPIRY_DATE.second))
@@ -167,7 +177,6 @@ private inline fun <reified T> CSVRecord.toSkvIsi(
                 .parse(v)
                 .toInstant()
                 .epochSecond.toString()
-
         else -> v
     }
 }?.asValue()?.let { value ->
