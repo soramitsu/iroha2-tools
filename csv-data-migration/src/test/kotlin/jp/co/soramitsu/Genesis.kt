@@ -1,8 +1,8 @@
 package jp.co.soramitsu
 
 import jp.co.soramitsu.iroha2.Genesis
-import jp.co.soramitsu.iroha2.IdKey
-import jp.co.soramitsu.iroha2.Permissions
+//import jp.co.soramitsu.iroha2.IdKey
+//import jp.co.soramitsu.iroha2.Permissions
 import jp.co.soramitsu.iroha2.asDomainId
 import jp.co.soramitsu.iroha2.asName
 import jp.co.soramitsu.iroha2.generateKeyPair
@@ -29,10 +29,10 @@ open class DefaultGenesis : Genesis(
                         ALICE_ACCOUNT_ID,
                         listOf(ALICE_KEYPAIR.public.toIrohaPublicKey())
                     ),
-                    Instructions.registerPermissionToken(
-                        Permissions.CanSetKeyValueUserAssetsToken.type,
-                        IdKey.AssetId
-                    )
+//                    Instructions.registerPermissionToken(
+//                        Permissions.CanSetKeyValueUserAssetsToken.type,
+//                        IdKey.AssetId
+//                    )
                 )
             )
         )

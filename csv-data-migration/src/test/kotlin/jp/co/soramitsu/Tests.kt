@@ -3,9 +3,13 @@ package jp.co.soramitsu
 import jp.co.soramitsu.iroha2.Genesis
 import jp.co.soramitsu.iroha2.client.Iroha2Client
 import jp.co.soramitsu.iroha2.query.QueryBuilder
-import jp.co.soramitsu.iroha2.testengine.IrohaContainer
-import jp.co.soramitsu.iroha2.testengine.IrohaTest
-import jp.co.soramitsu.iroha2.testengine.WithIroha
+import jp.co.soramitsu.iroha2.engine.IrohaTest
+import jp.co.soramitsu.iroha2.engine.WithIroha
+import jp.co.soramitsu.iroha2.testcontainers.IrohaContainer
+import kotlinx.coroutines.delay
+//import jp.co.soramitsu.iroha2.testengine.IrohaContainer
+//import jp.co.soramitsu.iroha2.testengine.IrohaTest
+//import jp.co.soramitsu.iroha2.testengine.WithIroha
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
@@ -41,6 +45,7 @@ class Tests : IrohaTest<Iroha2Client>() {
             ALICE_ACCOUNT_ID,
             ALICE_KEYPAIR
         )
+        delay(5000)
         client.checkAssetsSize(233)
     }
 

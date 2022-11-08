@@ -10,16 +10,13 @@ import jp.co.soramitsu.iroha2.client.Iroha2Client
 import jp.co.soramitsu.iroha2.generated.core.genesis.GenesisTransaction
 import jp.co.soramitsu.iroha2.generated.core.genesis.RawGenesisBlock
 import jp.co.soramitsu.iroha2.generated.datamodel.account.AccountId
+import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetDefinitionId
 import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetId
-import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetValue
 import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetValueType
-import jp.co.soramitsu.iroha2.generated.datamodel.asset.DefinitionId
 import jp.co.soramitsu.iroha2.generated.datamodel.isi.Instruction
-import jp.co.soramitsu.iroha2.generated.datamodel.metadata.Metadata
 import jp.co.soramitsu.iroha2.generated.datamodel.name.Name
 import jp.co.soramitsu.iroha2.transaction.Instructions
 import jp.co.soramitsu.iroha2.transaction.TransactionBuilder
-import kotlinx.coroutines.withTimeout
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import org.apache.commons.csv.CSVRecord
@@ -100,12 +97,10 @@ class Converter {
         val isi = mutableListOf<Instruction>()
 
         val id = this.getId()
-        val definitionId = DefinitionId("${id}_${UUID.randomUUID()}".asName(), CONTRIBUTION_DOMAIN_ID)
+        val definitionId = AssetDefinitionId("${id}_${UUID.randomUUID()}".asName(), CONTRIBUTION_DOMAIN_ID)
         val assetId = AssetId(definitionId, accountId)
 
-        Instructions.registerAssetDefinition(definitionId, AssetValueType.Store())
-            .also { isi.add(it) }
-        Instructions.registerAsset(assetId, AssetValue.Store(Metadata(mapOf())))
+        Instructions.registerAsset(definitionId, AssetValueType.Store())
             .also { isi.add(it) }
         Instructions.setKeyValue(assetId, ID.first, id.asValue())
             .also { isi.add(it) }
@@ -147,8 +142,6 @@ class Converter {
         this.sendTransaction {
             builder.buildSigned(keyPair)
         }
-    }.also {
-        withTimeout(10000) { it.await() }
     }
 }
 
