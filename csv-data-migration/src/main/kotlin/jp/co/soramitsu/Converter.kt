@@ -19,7 +19,6 @@ import jp.co.soramitsu.iroha2.generated.datamodel.metadata.Metadata
 import jp.co.soramitsu.iroha2.generated.datamodel.name.Name
 import jp.co.soramitsu.iroha2.transaction.Instructions
 import jp.co.soramitsu.iroha2.transaction.TransactionBuilder
-import kotlinx.coroutines.withTimeout
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import org.apache.commons.csv.CSVRecord
@@ -139,8 +138,6 @@ class Converter {
         this.sendTransaction {
             builder.buildSigned(keyPair)
         }
-    }.also {
-        withTimeout(10000) { it.await() }
     }
 }
 
