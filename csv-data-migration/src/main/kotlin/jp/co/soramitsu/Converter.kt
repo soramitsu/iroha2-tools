@@ -164,7 +164,7 @@ class Converter {
 private inline fun <reified T> CSVRecord.toSkvIsi(
     assetId: AssetId,
     type: Pair<Name, Int>
-) = this.toSkvIsi<T, Unit>(assetId, type)
+) = this.toSkvIsi<T, T>(assetId, type)
 
 private inline fun <reified T, reified R> CSVRecord.toSkvIsi(
     assetId: AssetId,
@@ -181,7 +181,7 @@ private inline fun <reified T, reified R> CSVRecord.toSkvIsi(
         else -> v
     }
 }?.let { value ->
-    conversion?.let { it(value.cast()) }
+    conversion?.let { it(value.cast()) } ?: value
 }?.asValue()?.let { value ->
     Instructions.setKeyValue(assetId, type.first, value)
 }
