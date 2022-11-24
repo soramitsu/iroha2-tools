@@ -177,9 +177,10 @@ private inline fun <reified T, reified R> CSVRecord.toSkvIsi(
     type: Pair<Name, Int>,
     noinline conversion: ((T) -> R)? = null
 ) = this.get(type.second).let { v ->
-    when (R::class) {
-        Long::class -> v.toLongOrNull()
-        Date::class ->
+    when {
+        v == "NULL" -> null
+        R::class == Long::class -> v.toLongOrNull()
+        R::class == Date::class ->
             Converter.dateFormatter
                 .parse(v)
                 .toInstant()
