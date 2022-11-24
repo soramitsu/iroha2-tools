@@ -8,7 +8,7 @@ import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.net.URL
 
-fun main(vararg args: String) = runBlocking {
+fun main(vararg args: String): Unit = runBlocking {
     val converter = Converter()
     converter.sendToIroha(
         File(args[0]), // csv

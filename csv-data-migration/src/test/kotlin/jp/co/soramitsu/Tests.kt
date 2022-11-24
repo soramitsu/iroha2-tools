@@ -6,7 +6,6 @@ import jp.co.soramitsu.iroha2.query.QueryBuilder
 import jp.co.soramitsu.iroha2.testengine.IrohaContainer
 import jp.co.soramitsu.iroha2.testengine.IrohaTest
 import jp.co.soramitsu.iroha2.testengine.WithIroha
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
@@ -29,7 +28,7 @@ class Tests : IrohaTest<Iroha2Client>() {
         )
         startContainer(genesis).use { container ->
             Iroha2Client(container.getApiUrl())
-                .checkAssetsSize(653)
+                .checkAssetsSize(233)
         }
     }
 
@@ -42,9 +41,7 @@ class Tests : IrohaTest<Iroha2Client>() {
             ALICE_ACCOUNT_ID,
             ALICE_KEYPAIR
         )
-
-        delay(5000)
-        client.checkAssetsSize(553) // unique assets
+        client.checkAssetsSize(233)
     }
 
     private fun startContainer(genesis: Genesis): IrohaContainer {
