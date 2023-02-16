@@ -27,7 +27,6 @@ dependencies {
     implementation("com.github.hyperledger.iroha-java:model:$iroha2Ver")
     implementation("com.github.hyperledger.iroha-java:block:$iroha2Ver")
 
-    testImplementation("com.github.hyperledger.iroha-java:testcontainers:$iroha2Ver")
     testImplementation("com.github.hyperledger.iroha-java:test-tools:$iroha2Ver")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVer")
 }
