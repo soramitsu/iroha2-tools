@@ -13,12 +13,32 @@ import java.util.Date
 
 enum class RepeatsEnum(val num: Int) {
     INDEFINITELY(0),
-    EXACTLY(1)
+    EXACTLY(1);
+
+    companion object {
+        fun from (num: Int): RepeatsEnum {
+            return when (num) {
+                INDEFINITELY.num -> INDEFINITELY
+                EXACTLY.num -> EXACTLY
+                else -> throw RuntimeException("Repeats $num not supported")
+            }
+        }
+    }
 }
 
 enum class TriggerType(val num: Int) {
     TIME(0),
-    DATA_BY_ACCOUNT_METADATA(1)
+    DATA_BY_ACCOUNT_METADATA(1);
+
+    companion object {
+        fun from (num: Int): TriggerType {
+            return when (num) {
+                TIME.num -> TIME
+                DATA_BY_ACCOUNT_METADATA.num -> DATA_BY_ACCOUNT_METADATA
+                else -> throw RuntimeException("Trigger type $num not supported")
+            }
+        }
+    }
 }
 
 fun getTimeTrigger(timeInterval: Long): EventsFilterBox.Time {

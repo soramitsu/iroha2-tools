@@ -3,6 +3,10 @@ package jp.co.soramitsu
 import jp.co.soramitsu.Mode.DEFAULT
 import jp.co.soramitsu.Mode.REGISTER
 import jp.co.soramitsu.Mode.UNREGISTER
+import jp.co.soramitsu.RepeatsEnum.EXACTLY
+import jp.co.soramitsu.RepeatsEnum.INDEFINITELY
+import jp.co.soramitsu.TriggerType.DATA_BY_ACCOUNT_METADATA
+import jp.co.soramitsu.TriggerType.TIME
 import jp.co.soramitsu.iroha2.asAccountId
 import jp.co.soramitsu.iroha2.asName
 import jp.co.soramitsu.iroha2.client.Iroha2Client
@@ -76,18 +80,26 @@ class Helper(private val client: Iroha2Client) {
     }
 
     private fun getWasmFiles(mode: Int, filePath: String): Map<String, File> {
-        return if (DEFAULT.mode == mode || UNREGISTER.mode == mode) {
-            File(filePath).walk()
-                .filter { !it.isDirectory }
-                .filter { it.name.endsWith(".wasm") }
-                .associateBy { it.name }
-        } else if (REGISTER.mode == mode) {
-            val file = File(filePath)
-            listOf(file).filter { it.isFile }
-                .associateBy { it.name }
-        } else {
-            throw RuntimeException("Mode $mode not supported")
+        return when (Mode.from(mode)) {
+            DEFAULT -> {
+                getFilesFromPath(filePath)
+            }
+            UNREGISTER -> {
+                getFilesFromPath(filePath)
+            }
+            REGISTER -> {
+                val file = File(filePath)
+                listOf(file).filter { it.isFile }
+                    .associateBy { it.name }
+            }
         }
+    }
+
+    private fun getFilesFromPath(filePath: String): Map<String, File> {
+        return File(filePath).walk()
+            .filter { !it.isDirectory }
+            .filter { it.name.endsWith(".wasm") }
+            .associateBy { it.name }
     }
 
     private suspend fun getTrigger(
@@ -133,22 +145,16 @@ class Helper(private val client: Iroha2Client) {
     }
 
     private fun getRepeats(repeats: Int): Repeats {
-        return if (RepeatsEnum.INDEFINITELY.num == repeats) {
-            Repeats.Indefinitely()
-        } else if (RepeatsEnum.EXACTLY.num == repeats) {
-            Repeats.Exactly(repeats.toLong())
-        } else {
-            throw RuntimeException("Unsupported repeats type")
+        return when (RepeatsEnum.from(repeats)) {
+            INDEFINITELY -> Repeats.Indefinitely()
+            EXACTLY -> Repeats.Exactly(repeats.toLong())
         }
     }
 
     private fun getFilter(triggerType: Int, triggerArgument: String): EventsFilterBox {
-        return if (TriggerType.TIME.num == triggerType) {
-            getTimeTrigger(triggerArgument.toLong())
-        } else if (TriggerType.DATA_BY_ACCOUNT_METADATA.num == triggerType) {
-            getDataTriggerByAccountMetadataInserted()
-        } else {
-            throw RuntimeException("Unsupported trigger type")
+        return when (TriggerType.from(triggerType)) {
+            TIME -> getTimeTrigger(triggerArgument.toLong())
+            DATA_BY_ACCOUNT_METADATA -> getDataTriggerByAccountMetadataInserted()
         }
     }
 }
