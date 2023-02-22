@@ -8,6 +8,16 @@ plugins {
 group = "jp.co.soramitsu"
 version = "1.0-SNAPSHOT"
 
+tasks.jar {
+    manifest {
+        attributes["Main-Class"] = "jp.co.soramitsu.MainKt"
+    }
+    from(configurations.compileClasspath.map { config -> config.map { if (it.isDirectory) it else zipTree(it) } }) {
+        exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 repositories {
     mavenCentral()
     maven(url = "https://jitpack.io")

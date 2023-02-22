@@ -6,7 +6,7 @@ enum class Mode(val mode: Int) {
     UNREGISTER(2);
 
     companion object {
-        fun from (mode: Int): Mode {
+        fun from(mode: Int): Mode {
             return when (mode) {
                 DEFAULT.mode -> DEFAULT
                 REGISTER.mode -> REGISTER

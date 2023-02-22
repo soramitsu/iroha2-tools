@@ -47,14 +47,17 @@ class Helper(private val client: Iroha2Client) {
 
         val idsValues = triggerIds.map { it.name.string }
         val wasmFileNames = wasmFiles.map { it.key.removeSuffix(".wasm") }
-        if ((mode == DEFAULT.mode || mode == UNREGISTER.mode)
-            && !wasmFileNames.all { n -> idsValues.any { id -> id.startsWith(n) } }) {
+        if ((mode == DEFAULT.mode || mode == UNREGISTER.mode) &&
+            !wasmFileNames.all { n -> idsValues.any { id -> id.startsWith(n) } }
+        ) {
             throw RuntimeException("Found triggers: $idsValues, provided files: $wasmFileNames")
         }
 
         return wasmFiles.map { file ->
-            val trigger = getTrigger(triggerIds, admin, keyPair, file, mode, repeats,
-                triggerType, technicalAccount, triggerArgument)
+            val trigger = getTrigger(
+                triggerIds, admin, keyPair, file, mode, repeats,
+                triggerType, technicalAccount, triggerArgument
+            )
             client.sendTransaction {
                 account(admin)
                 if (mode == DEFAULT.mode || mode == UNREGISTER.mode) {
