@@ -1,8 +1,6 @@
 package jp.co.soramitsu
 
-import jp.co.soramitsu.Mode.DEFAULT
-import jp.co.soramitsu.Mode.REGISTER
-import jp.co.soramitsu.Mode.UNREGISTER
+import jp.co.soramitsu.Mode.*
 import jp.co.soramitsu.RepeatsEnum.EXACTLY
 import jp.co.soramitsu.RepeatsEnum.INDEFINITELY
 import jp.co.soramitsu.TriggerType.DATA_BY_ACCOUNT_METADATA
@@ -53,33 +51,40 @@ class Helper(private val client: Iroha2Client) {
             throw RuntimeException("Found triggers: $idsValues, provided files: $wasmFileNames")
         }
 
-        return wasmFiles.map { file ->
-            val trigger = getTrigger(
+        val returningList = mutableListOf<TriggerId>()
+
+        wasmFiles.map { file ->
+            val triggers = getTriggers(
                 triggerIds, admin, keyPair, file, mode, repeats,
                 triggerType, technicalAccount, triggerArgument
             )
             client.sendTransaction {
                 account(admin)
-                if (mode == DEFAULT.mode || mode == UNREGISTER.mode) {
-                    unregisterTrigger(trigger.id.name.string)
-                }
-                if (mode == DEFAULT.mode || mode == REGISTER.mode) {
-                    registerWasmTrigger(
-                        trigger.id,
-                        file.value.readBytes(),
-                        trigger.action.repeats,
-                        trigger.action.technicalAccount,
-                        trigger.action.metadata,
-                        trigger.action.filter
-                    )
+                triggers.forEach {
+                    if (mode == DEFAULT.mode || mode == UNREGISTER.mode) {
+                        unregisterTrigger(it.id.name.string)
+                    }
+                    if (mode == DEFAULT.mode || mode == REGISTER.mode) {
+                        registerWasmTrigger(
+                            it.id,
+                            file.value.readBytes(),
+                            it.action.repeats,
+                            it.action.technicalAccount,
+                            it.action.metadata,
+                            it.action.filter
+                        )
+                    }
+                    returningList.add(it.id)
                 }
                 buildSigned(keyPair)
             }.also {
                 withTimeout(30000) {
                     it.await()
                 }
-            }.let { trigger.id }
+            }
         }
+
+        return returningList
     }
 
     private fun getWasmFiles(mode: Int, filePath: String): Map<String, File> {
@@ -105,7 +110,7 @@ class Helper(private val client: Iroha2Client) {
             .associateBy { it.name }
     }
 
-    private suspend fun getTrigger(
+    private suspend fun getTriggers(
         triggerIds: List<TriggerId>,
         admin: AccountId,
         keyPair: KeyPair,
@@ -115,27 +120,31 @@ class Helper(private val client: Iroha2Client) {
         triggerType: Int,
         technicalAccount: String,
         triggerArgument: String
-    ): Trigger<*> {
+    ): List<Trigger<*>> {
         if (DEFAULT.mode == mode || UNREGISTER.mode == mode) {
-            val id = getTriggerIdByPrefix(triggerIds, file.key.removeSuffix(".wasm"))[0]
-            return QueryBuilder.findTriggerById(id)
-                .account(admin)
-                .buildSigned(keyPair)
-                .let { client.sendQuery(it) }
+            val ids = getTriggerIdByPrefix(triggerIds, file.key.removeSuffix(".wasm"))
+            return ids.map {
+                QueryBuilder.findTriggerById(it)
+                    .account(admin)
+                    .buildSigned(keyPair)
+                    .let { client.sendQuery(it) }
+            }
         } else {
             val newTriggerId = file.key.removeSuffix(".wasm")
             val id = getTriggerIdByPrefix(triggerIds, newTriggerId)
-            if (!id.isEmpty()) {
+            if (id.isNotEmpty()) {
                 throw RuntimeException("Trigger $id already exists")
             }
-            return Trigger<Any>(
-                TriggerId(newTriggerId.asName()),
-                Action(
-                    Executable.Wasm(WasmSmartContract(file.value.readBytes())),
-                    getRepeats(repeats),
-                    technicalAccount.asAccountId(),
-                    getFilter(triggerType, triggerArgument),
-                    Metadata(mapOf())
+            return listOf(
+                Trigger<Any>(
+                    TriggerId(newTriggerId.asName()),
+                    Action(
+                        Executable.Wasm(WasmSmartContract(file.value.readBytes())),
+                        getRepeats(repeats),
+                        technicalAccount.asAccountId(),
+                        getFilter(triggerType, triggerArgument),
+                        Metadata(mapOf())
+                    )
                 )
             )
         }
