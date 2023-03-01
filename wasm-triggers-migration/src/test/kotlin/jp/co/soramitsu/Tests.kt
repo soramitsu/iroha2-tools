@@ -34,7 +34,8 @@ class Tests : IrohaTest<Iroha2Client>() {
     @Test
     @WithIroha([DefaultGenesis::class])
     fun `should update all smart contracts`(): Unit = runBlocking {
-        registerNftStatsTrigger()
+        registerNftStatsTrigger("trigger_nft_stats")
+        registerNftStatsTrigger("trigger_nft_stats2")
         registerMintCreditTrigger(
             AccountId("Bob".asName(), DEFAULT_DOMAIN_ID)
         )
@@ -47,7 +48,7 @@ class Tests : IrohaTest<Iroha2Client>() {
             ALICE_KEYPAIR,
             DEFAULT.mode
         ).also {
-            assertEquals(2, it.size)
+            assertEquals(3, it.size)
         }
     }
 
@@ -83,7 +84,8 @@ class Tests : IrohaTest<Iroha2Client>() {
     @Test
     @WithIroha([DefaultGenesis::class])
     fun `should only unregister triggers`(): Unit = runBlocking {
-        registerNftStatsTrigger()
+        registerNftStatsTrigger("trigger_nft_stats")
+        registerNftStatsTrigger("trigger_nft_stats2")
         registerMintCreditTrigger(
             AccountId("Bob".asName(), DEFAULT_DOMAIN_ID)
         )
@@ -95,7 +97,7 @@ class Tests : IrohaTest<Iroha2Client>() {
             ALICE_KEYPAIR,
             UNREGISTER.mode
         ).also {
-            assertEquals(2, it.size)
+            assertEquals(3, it.size)
         }
 
         getActiveTriggers().also {
@@ -141,11 +143,11 @@ class Tests : IrohaTest<Iroha2Client>() {
         }
     }
 
-    private suspend fun registerNftStatsTrigger() {
+    private suspend fun registerNftStatsTrigger(triggerId: String) {
         client.sendTransaction {
             account(ALICE_ACCOUNT_ID)
             registerWasmTrigger(
-                TriggerId("trigger_nft_stats".asName()),
+                TriggerId(triggerId.asName()),
                 this.javaClass.classLoader
                     .getResource("trigger_nft_stats.wasm")
                     .readBytes(),
