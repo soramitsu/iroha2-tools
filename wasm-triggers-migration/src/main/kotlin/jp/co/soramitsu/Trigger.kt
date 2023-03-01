@@ -16,7 +16,7 @@ enum class RepeatsEnum(val num: Int) {
     EXACTLY(1);
 
     companion object {
-        fun from (num: Int): RepeatsEnum {
+        fun from(num: Int): RepeatsEnum {
             return when (num) {
                 INDEFINITELY.num -> INDEFINITELY
                 EXACTLY.num -> EXACTLY
@@ -31,7 +31,7 @@ enum class TriggerType(val num: Int) {
     DATA_BY_ACCOUNT_METADATA(1);
 
     companion object {
-        fun from (num: Int): TriggerType {
+        fun from(num: Int): TriggerType {
             return when (num) {
                 TIME.num -> TIME
                 DATA_BY_ACCOUNT_METADATA.num -> DATA_BY_ACCOUNT_METADATA
@@ -63,4 +63,3 @@ fun getDataTriggerByAccountMetadataInserted(accountId: AccountId? = null): Event
         )
     )
 }
-
