@@ -18,11 +18,11 @@ fun main(vararg args: String): Unit = runBlocking {
 
     repeat(100) {
         converter.sendToIroha(client, File(args[0]), admin, keyPair)
+    }
 
-        QueryBuilder.findAllAssets()
+    QueryBuilder.findAllAssets()
             .account(admin)
             .buildSigned(keyPair)
             .let { client.sendQuery(it) }
             .also { println("\n\nFOUND ${it.size} ASSETS\n\n") }
-    }
 }

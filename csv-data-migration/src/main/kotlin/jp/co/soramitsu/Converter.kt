@@ -13,7 +13,7 @@ import jp.co.soramitsu.iroha2.generated.datamodel.account.AccountId
 import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetId
 import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetValue
 import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetValueType
-import jp.co.soramitsu.iroha2.generated.datamodel.asset.DefinitionId
+import jp.co.soramitsu.iroha2.generated.datamodel.asset.AssetDefinitionId
 import jp.co.soramitsu.iroha2.generated.datamodel.isi.Instruction
 import jp.co.soramitsu.iroha2.generated.datamodel.metadata.Metadata
 import jp.co.soramitsu.iroha2.generated.datamodel.name.Name
@@ -97,7 +97,7 @@ class Converter {
         val isi = mutableListOf<Instruction>()
 
         val id = "+${this.get(ID.second)}-+${this.get(ID.second + 1)}_${System.currentTimeMillis()}"
-        val definitionId = DefinitionId(id.asName(), CONTRIBUTION_DOMAIN_ID)
+        val definitionId = AssetDefinitionId(id.asName(), CONTRIBUTION_DOMAIN_ID)
 
         val assetId = AssetId(definitionId, accountId)
 
@@ -135,6 +135,9 @@ class Converter {
         account(account)
         this.instructions.value.addAll(isi)
     }.let { builder ->
+//        this.sendTransaction {
+//            builder.buildSigned(keyPair)
+//        }.await()
         this.sendTransaction {
             builder.buildSigned(keyPair)
         }
