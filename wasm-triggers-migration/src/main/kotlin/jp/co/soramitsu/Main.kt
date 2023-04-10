@@ -17,21 +17,20 @@ fun main(vararg args: String): Unit = runBlocking {
         false -> null
     }
 
-    fun isRegisterMode(vararg args: String): Boolean = args.size == 11 && REGISTER.mode == args[6].toInt()
-
-    Helper(Iroha2Client(URL(args[0]), log = true, credentials = credentials))
-        .update(
-            args[1], // directory with WASM contracts
-            AccountId(args[2].asName(), args[3].asDomainId()),
-            keyPairFromHex(args[4], args[5]),
-            args[6].toInt(), // mode
-            if (isRegisterMode(*args)) args[7].toInt() else -1, // Repeats
-            if (isRegisterMode(*args)) args[8].toInt() else -1, // Trigger type
-            if (isRegisterMode(*args)) args[9] else "", // Technical account
-            if (isRegisterMode(*args)) args[10] else "" // Argument for specific trigger type
-        ).map { triggerId ->
-            triggerId.name.string
-        }.also { results ->
-            println("$results have been updated")
-        }
+    Helper(Iroha2Client(URL(args[0]), log = true, credentials = credentials)).update(
+        args[1], // directory with WASM contracts
+        AccountId(args[2].asName(), args[3].asDomainId()),
+        keyPairFromHex(args[4], args[5]),
+        args[6].toInt(), // mode
+        if (isRegisterMode(*args)) args[7].toInt() else -1, // Repeats
+        if (isRegisterMode(*args)) args[8].toInt() else -1, // Trigger type
+        if (isRegisterMode(*args)) args[9] else "", // Technical account
+        if (isRegisterMode(*args)) args[10] else "" // Argument for specific trigger type
+    ).map { triggerId ->
+        triggerId.name.string
+    }.also { results ->
+        println("$results have been updated")
+    }
 }
+
+private fun isRegisterMode(vararg args: String): Boolean = args.size == 11 && REGISTER.mode == args[6].toInt()

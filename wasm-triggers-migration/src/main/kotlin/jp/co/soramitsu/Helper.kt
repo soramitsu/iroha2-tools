@@ -1,6 +1,8 @@
 package jp.co.soramitsu
 
-import jp.co.soramitsu.Mode.*
+import jp.co.soramitsu.Mode.DEFAULT
+import jp.co.soramitsu.Mode.REGISTER
+import jp.co.soramitsu.Mode.UNREGISTER
 import jp.co.soramitsu.RepeatsEnum.EXACTLY
 import jp.co.soramitsu.RepeatsEnum.INDEFINITELY
 import jp.co.soramitsu.TriggerType.DATA_BY_ACCOUNT_METADATA
@@ -9,7 +11,6 @@ import jp.co.soramitsu.iroha2.asAccountId
 import jp.co.soramitsu.iroha2.asName
 import jp.co.soramitsu.iroha2.client.Iroha2Client
 import jp.co.soramitsu.iroha2.generated.datamodel.account.AccountId
-import jp.co.soramitsu.iroha2.generated.datamodel.events.EventsFilterBox
 import jp.co.soramitsu.iroha2.generated.datamodel.metadata.Metadata
 import jp.co.soramitsu.iroha2.generated.datamodel.transaction.Executable
 import jp.co.soramitsu.iroha2.generated.datamodel.transaction.WasmSmartContract
@@ -89,17 +90,9 @@ class Helper(private val client: Iroha2Client) {
 
     private fun getWasmFiles(mode: Int, filePath: String): Map<String, File> {
         return when (Mode.from(mode)) {
-            DEFAULT -> {
-                getFilesFromPath(filePath)
-            }
-            UNREGISTER -> {
-                getFilesFromPath(filePath)
-            }
-            REGISTER -> {
-                val file = File(filePath)
-                listOf(file).filter { it.isFile }
-                    .associateBy { it.name }
-            }
+            DEFAULT -> getFilesFromPath(filePath)
+            UNREGISTER -> getFilesFromPath(filePath)
+            REGISTER -> listOf(File(filePath)).filter { it.isFile }.associateBy { it.name }
         }
     }
 
@@ -123,8 +116,8 @@ class Helper(private val client: Iroha2Client) {
     ): List<Trigger<*>> {
         if (DEFAULT.mode == mode || UNREGISTER.mode == mode) {
             val ids = getTriggerIdByPrefix(triggerIds, file.key.removeSuffix(".wasm"))
-            return ids.map {
-                QueryBuilder.findTriggerById(it)
+            return ids.map { id ->
+                QueryBuilder.findTriggerById(id)
                     .account(admin)
                     .buildSigned(keyPair)
                     .let { client.sendQuery(it) }
@@ -150,23 +143,18 @@ class Helper(private val client: Iroha2Client) {
         }
     }
 
-    private fun getTriggerIdByPrefix(triggerIds: List<TriggerId>, prefix: String): List<TriggerId> {
-        return triggerIds.filter { id ->
-            id.name.string.startsWith(prefix)
-        }
+    private fun getTriggerIdByPrefix(
+        triggerIds: List<TriggerId>,
+        prefix: String
+    ) = triggerIds.filter { id -> id.name.string.startsWith(prefix) }
+
+    private fun getRepeats(repeats: Int) = when (RepeatsEnum.from(repeats)) {
+        INDEFINITELY -> Repeats.Indefinitely()
+        EXACTLY -> Repeats.Exactly(repeats.toLong())
     }
 
-    private fun getRepeats(repeats: Int): Repeats {
-        return when (RepeatsEnum.from(repeats)) {
-            INDEFINITELY -> Repeats.Indefinitely()
-            EXACTLY -> Repeats.Exactly(repeats.toLong())
-        }
-    }
-
-    private fun getFilter(triggerType: Int, triggerArgument: String): EventsFilterBox {
-        return when (TriggerType.from(triggerType)) {
-            TIME -> getTimeTrigger(triggerArgument.toLong())
-            DATA_BY_ACCOUNT_METADATA -> getDataTriggerByAccountMetadataInserted()
-        }
+    private fun getFilter(triggerType: Int, triggerArgument: String) = when (TriggerType.from(triggerType)) {
+        TIME -> getTimeTrigger(triggerArgument.toLong())
+        DATA_BY_ACCOUNT_METADATA -> getDataTriggerByAccountMetadataInserted()
     }
 }
