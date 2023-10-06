@@ -1,6 +1,7 @@
 # Iroha 2 query tool
 
 ### Building docker image
+
 Enter to iroha2-kotlin-query-tool directory
 
 ```
@@ -8,8 +9,9 @@ Enter to iroha2-kotlin-query-tool directory
 docker build -t iroha2-query .
 ```
 
-To query Iroha2 peer with basic authentication run the following command (username, password, peer_url, 
-    admin_account, admin_private_key_hex, admin_public_key_hex):
+To query Iroha2 peer with basic authentication run the following command (username, password, peer_url,
+admin_account, admin_private_key_hex, admin_public_key_hex):
+
 ```
 docker run iroha2-query 
        "USERNAME"
@@ -19,4 +21,18 @@ docker run iroha2-query
        "aaaaaaaaaaaaaabbbbbbbbbbbbccccccccccccccdddddddddddddeeeeeeeeeee"  
        "aaaaaaaaaaaaaabbbbbbbbbbbbccccccccccccccdddddddddddddeeeeeeeeeee"
 ```
+
 Peer domains information in json format will be printed.
+
+To query Iroha2 peer without basic authentication run the following command (username, password, peer_url,
+admin_account, admin_private_key_hex, admin_public_key_hex):
+
+```
+docker run iroha2-query 
+       ""
+       ""
+       "https://peer_address.co.jp/"
+       "admin@domain"
+       "aaaaaaaaaaaaaabbbbbbbbbbbbccccccccccccccdddddddddddddeeeeeeeeeee"  
+       "aaaaaaaaaaaaaabbbbbbbbbbbbccccccccccccccdddddddddddddeeeeeeeeeee"
+```

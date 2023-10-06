@@ -1,9 +1,16 @@
 package jp.co.genesis.config
 
+import jp.co.soramitsu.iroha2.ACCOUNT_ID_DELIMITER
 import org.springframework.boot.CommandLineRunner
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
-import java.util.Base64
 
+@ConditionalOnProperty(
+    prefix = "command.line.runner",
+    value = ["enabled"],
+    havingValue = "true",
+    matchIfMissing = true
+)
 @Component
 class ArgumentsRunner(val config: Iroha2Config) : CommandLineRunner {
 
@@ -40,23 +47,17 @@ class ArgumentsRunner(val config: Iroha2Config) : CommandLineRunner {
             return
         }
 
-        val encode: String = try {
-            Base64.getEncoder().encodeToString("$username:$password".toByteArray())
-        } catch (e: Exception) {
-            println("Failed to encode username and password: ${e.message}")
-            return
-        }
-
-        val tokens = adminAccount.split(config.accountDelimiter)
+        val tokens = adminAccount.split(ACCOUNT_ID_DELIMITER)
         if (tokens.size != 2) {
-            println("Specify adminAccount as USERNAME${config.accountDelimiter}DOMAIN")
+            println("Specify adminAccount as USERNAME${ACCOUNT_ID_DELIMITER}DOMAIN")
             return
         }
 
         config.adminAccount = adminAccount
         config.adminPrivateKeyHex = adminPrivateKeyHex
         config.adminPublicKeyHex = adminPublicKeyHex
-        config.basicAuth = encode
+        config.username = username
+        config.password = password
         config.url = peerUrl
     }
 }

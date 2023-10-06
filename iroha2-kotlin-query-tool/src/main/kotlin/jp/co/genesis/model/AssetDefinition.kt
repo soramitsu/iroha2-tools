@@ -1,6 +1,6 @@
 package jp.co.genesis.model
 
-data class Asset(
+data class AssetDefinition(
     val name: String,
     val domainId: String,
     val valueType: String,
