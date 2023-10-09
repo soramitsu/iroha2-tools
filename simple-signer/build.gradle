@@ -1,6 +1,8 @@
 plugins {
+    id("org.springframework.boot") version "2.6.4"
+    id("io.spring.dependency-management") version "1.0.11.RELEASE"
     id "org.jetbrains.kotlin.jvm" version "$kotlinVer"
-    id 'maven'
+    id("org.jetbrains.kotlin.plugin.spring") version "1.6.10"
 }
 
 group 'jp.co.soramitsu.signer'
@@ -12,6 +14,9 @@ repositories {
 }
 
 dependencies {
+    // Spring
+    implementation "org.springframework.boot:spring-boot-starter-web"
+
     // Iroha 2
     compile "com.github.hyperledger.iroha-java:client:$iroha2Ver"
 }
@@ -27,18 +32,5 @@ compileTestKotlin {
     kotlinOptions {
         freeCompilerArgs = ["-Xjsr305=strict"]
         jvmTarget = 11
-    }
-}
-
-jar {
-    manifest {
-        attributes 'Main-Class': 'jp.co.soramitsu.signer.SimpleSignerKt'
-    }
-
-    // This line of code recursively collects and copies all of a project's files
-    // and adds them to the JAR itself. One can extend this task, to skip certain
-    // files or particular types at will
-    from {
-        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
 }
