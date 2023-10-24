@@ -2,6 +2,7 @@ package jp.co.genesis.listener
 
 import jp.co.genesis.config.Iroha2Config
 import jp.co.genesis.service.IrohaService
+import kotlinx.coroutines.runBlocking
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.ApplicationListener
 import org.springframework.context.annotation.Profile
@@ -15,10 +16,12 @@ class ContextListener(
 ) : ApplicationListener<ApplicationReadyEvent> {
 
     override fun onApplicationEvent(event: ApplicationReadyEvent) {
-        try {
-            println(irohaService.query(config))
-        } catch (e: Exception) {
-            println("Failed to query Iroha2: ${e.message}")
+        runBlocking {
+            try {
+                println(irohaService.query(config))
+            } catch (e: Exception) {
+                println("Failed to query Iroha2: ${e.message}")
+            }
         }
         event.applicationContext.close()
     }
