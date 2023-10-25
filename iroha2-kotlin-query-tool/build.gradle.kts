@@ -3,8 +3,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     id("org.springframework.boot") version "2.6.4"
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
-    kotlin("jvm") version "1.6.10"
-    kotlin("plugin.spring") version "1.6.10"
+    kotlin("jvm") version "1.8.22"
+    kotlin("plugin.spring") version "1.8.22"
     id("org.jmailen.kotlinter") version "3.9.0"
 }
 
@@ -36,11 +36,15 @@ dependencies {
     // iroha2
     api("com.github.hyperledger.iroha-java:client:$iroha2Ver")
     implementation("com.github.hyperledger.iroha-java:model:$iroha2Ver")
+    implementation("com.github.hyperledger.iroha-java:test-tools:$iroha2Ver")
 
     // crypto
     implementation("net.i2p.crypto:eddsa:$i2pCryptoEddsa")
     implementation("org.bouncycastle:bcprov-jdk15on:$bouncyCastleVer")
     implementation("com.github.multiformats:java-multihash:$multihashVersion")
+
+    // test
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
 tasks.withType<KotlinCompile> {
