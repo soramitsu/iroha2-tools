@@ -10,14 +10,14 @@ import jp.co.soramitsu.TriggerType.TIME
 import jp.co.soramitsu.iroha2.asAccountId
 import jp.co.soramitsu.iroha2.asName
 import jp.co.soramitsu.iroha2.client.Iroha2Client
-import jp.co.soramitsu.iroha2.generated.datamodel.account.AccountId
-import jp.co.soramitsu.iroha2.generated.datamodel.metadata.Metadata
-import jp.co.soramitsu.iroha2.generated.datamodel.transaction.Executable
-import jp.co.soramitsu.iroha2.generated.datamodel.transaction.WasmSmartContract
-import jp.co.soramitsu.iroha2.generated.datamodel.trigger.Trigger
-import jp.co.soramitsu.iroha2.generated.datamodel.trigger.TriggerId
-import jp.co.soramitsu.iroha2.generated.datamodel.trigger.action.Action
-import jp.co.soramitsu.iroha2.generated.datamodel.trigger.action.Repeats
+import jp.co.soramitsu.iroha2.generated.AccountId
+import jp.co.soramitsu.iroha2.generated.ActionOfTriggeringFilterBox
+import jp.co.soramitsu.iroha2.generated.Executable
+import jp.co.soramitsu.iroha2.generated.Metadata
+import jp.co.soramitsu.iroha2.generated.Repeats
+import jp.co.soramitsu.iroha2.generated.TriggerId
+import jp.co.soramitsu.iroha2.generated.TriggerOfTriggeringFilterBox
+import jp.co.soramitsu.iroha2.generated.WasmSmartContract
 import jp.co.soramitsu.iroha2.query.QueryBuilder
 import kotlinx.coroutines.withTimeout
 import java.io.File
@@ -33,7 +33,7 @@ class Helper(private val client: Iroha2Client) {
         repeats: Int = -1,
         triggerType: Int = -1,
         technicalAccount: String = "",
-        triggerArgument: String = ""
+        triggerArgument: String = "",
     ): List<TriggerId> {
         val wasmFiles = getWasmFiles(mode, filePath)
         if (wasmFiles.isEmpty()) {
@@ -57,7 +57,7 @@ class Helper(private val client: Iroha2Client) {
         wasmFiles.map { file ->
             val triggers = getTriggers(
                 triggerIds, admin, keyPair, file, mode, repeats,
-                triggerType, technicalAccount, triggerArgument
+                triggerType, technicalAccount, triggerArgument,
             )
             client.sendTransaction {
                 account(admin)
@@ -70,9 +70,9 @@ class Helper(private val client: Iroha2Client) {
                             it.id,
                             file.value.readBytes(),
                             it.action.repeats,
-                            it.action.technicalAccount,
+                            it.action.authority,
                             it.action.metadata,
-                            it.action.filter
+                            it.action.filter,
                         )
                     }
                     returningList.add(it.id)
@@ -112,8 +112,8 @@ class Helper(private val client: Iroha2Client) {
         repeats: Int,
         triggerType: Int,
         technicalAccount: String,
-        triggerArgument: String
-    ): List<Trigger<*>> {
+        triggerArgument: String,
+    ): List<TriggerOfTriggeringFilterBox> {
         if (DEFAULT.mode == mode || UNREGISTER.mode == mode) {
             val ids = getTriggerIdByPrefix(triggerIds, file.key.removeSuffix(".wasm"))
             return ids.map { id ->
@@ -129,23 +129,23 @@ class Helper(private val client: Iroha2Client) {
                 throw RuntimeException("Trigger $id already exists")
             }
             return listOf(
-                Trigger<Any>(
-                    TriggerId(newTriggerId.asName()),
-                    Action(
+                TriggerOfTriggeringFilterBox(
+                    TriggerId(name = newTriggerId.asName()),
+                    ActionOfTriggeringFilterBox(
                         Executable.Wasm(WasmSmartContract(file.value.readBytes())),
                         getRepeats(repeats),
                         technicalAccount.asAccountId(),
                         getFilter(triggerType, triggerArgument),
-                        Metadata(mapOf())
-                    )
-                )
+                        Metadata(mapOf()),
+                    ),
+                ),
             )
         }
     }
 
     private fun getTriggerIdByPrefix(
         triggerIds: List<TriggerId>,
-        prefix: String
+        prefix: String,
     ) = triggerIds.filter { id -> id.name.string.startsWith(prefix) }
 
     private fun getRepeats(repeats: Int) = when (RepeatsEnum.from(repeats)) {

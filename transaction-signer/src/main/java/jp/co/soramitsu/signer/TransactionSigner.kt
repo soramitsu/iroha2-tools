@@ -1,7 +1,7 @@
 package jp.co.soramitsu.signer
 
 import jp.co.soramitsu.iroha2.appendSignatures
-import jp.co.soramitsu.iroha2.generated.VersionedSignedTransaction
+import jp.co.soramitsu.iroha2.generated.SignedTransaction
 import jp.co.soramitsu.iroha2.keyPairFromHex
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable
 import org.bouncycastle.util.encoders.Hex
@@ -41,9 +41,9 @@ fun sign(args: Array<String>) {
         privateKey,
         EdDSANamedCurveTable.getByName(EdDSANamedCurveTable.ED_25519)
     )
-    val decodedTransaction = transaction.let { VersionedSignedTransaction.decode(it) }
+    val decodedTransaction = transaction.let { SignedTransaction.decode(it) }
     val signedTransaction = decodedTransaction.appendSignatures(keyPair)
 
-    val encoded = signedTransaction.let { VersionedSignedTransaction.encode(it) }
+    val encoded = signedTransaction.let { SignedTransaction.encode(it) }
     println("Signed transaction (Hex): ${Hex.toHexString(encoded)}")
 }
