@@ -43,7 +43,7 @@ class IrohaService(
             telemetryUrl = config.url,
             peerUrl = config.url,
             log = true,
-            credentials
+            credentials,
         )
         val adminAccount = config.adminAccount.asAccountId()
 
@@ -52,8 +52,8 @@ class IrohaService(
             .buildSigned(
                 KeyPair(
                     publicKeyFromHex(config.adminPublicKeyHex),
-                    privateKeyFromHex(config.adminPrivateKeyHex)
-                )
+                    privateKeyFromHex(config.adminPrivateKeyHex),
+                ),
             )
             .let { query ->
                 iroha2Client.sendQuery(query)
@@ -65,7 +65,7 @@ class IrohaService(
                             AccountAsset(
                                 id = t.definitionId.name.string,
                                 domainId = t.definitionId.domainId.name.string,
-                                value = u.value.toString()
+                                value = u.value.toString(),
                             )
                         }
                         val accountSignatories = account.signatories.map { publicKey ->
@@ -84,8 +84,7 @@ class IrohaService(
                             assets = accountAssets,
                             signatories = accountSignatories,
                             metadata = accountMetadata,
-                            roles = account.roles.map { it.name.string },
-                            permissions
+                            permissions,
                         )
                     }
                     val domainMetadata = domain.metadata.map.entries.associate {
@@ -96,7 +95,7 @@ class IrohaService(
                         id = domain.id.name.string,
                         domainMetadata = domainMetadata,
                         accounts = accounts,
-                        assetDefinitions = assetDefinitions
+                        assetDefinitions = assetDefinitions,
                     )
                 }
             }.let {
@@ -108,15 +107,15 @@ class IrohaService(
         accountId: AccountId,
         adminAccount: AccountId,
         config: Iroha2Config,
-        iroha2Client: Iroha2Client
+        iroha2Client: Iroha2Client,
     ): List<PermissionToken> {
         return QueryBuilder.findPermissionTokensByAccountId(accountId)
             .account(adminAccount)
             .buildSigned(
                 KeyPair(
                     publicKeyFromHex(config.adminPublicKeyHex),
-                    privateKeyFromHex(config.adminPrivateKeyHex)
-                )
+                    privateKeyFromHex(config.adminPrivateKeyHex),
+                ),
             )
             .let { query ->
                 iroha2Client.sendQuery(query)
@@ -141,7 +140,7 @@ class IrohaService(
                 domainId = t.domainId.name.string,
                 valueType = u.valueType.toString(),
                 metadata = assetMetadata,
-                mintable = mintable
+                mintable = mintable,
             )
         }
     }

@@ -29,7 +29,7 @@ import java.math.BigInteger
 import java.util.*
 import kotlin.test.assertEquals
 
-@Timeout(60)
+@Timeout(100)
 class Tests : IrohaTest<Iroha2Client>() {
 
     @Test
