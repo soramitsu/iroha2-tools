@@ -1,10 +1,11 @@
 package jp.co.soramitsu
 
+import jp.co.soramitsu.iroha2.generated.AccountEventFilter
+import jp.co.soramitsu.iroha2.generated.AccountId
 import jp.co.soramitsu.iroha2.generated.Duration
-import jp.co.soramitsu.iroha2.generated.datamodel.account.AccountId
-import jp.co.soramitsu.iroha2.generated.datamodel.events.EventsFilterBox
-import jp.co.soramitsu.iroha2.generated.datamodel.events.data.events.account.AccountEventFilter
-import jp.co.soramitsu.iroha2.generated.datamodel.events.data.filters.OriginFilterAccountEvent
+import jp.co.soramitsu.iroha2.generated.FilterOptOfDataEntityFilter
+import jp.co.soramitsu.iroha2.generated.OriginFilterOfAccountEvent
+import jp.co.soramitsu.iroha2.generated.TriggeringFilterBox
 import jp.co.soramitsu.iroha2.transaction.EntityFilters
 import jp.co.soramitsu.iroha2.transaction.EventFilters
 import jp.co.soramitsu.iroha2.transaction.Filters
@@ -41,9 +42,9 @@ enum class TriggerType(val num: Int) {
     }
 }
 
-fun getTimeTrigger(timeInterval: Long): EventsFilterBox.Time {
+fun getTimeTrigger(timeInterval: Long): TriggeringFilterBox.Time {
     val currentTime = Date().time / 1000
-    return Filters.time(
+    return TriggeringFilterBox.Time(
         EventFilters.timeEventFilter(
             Duration(BigInteger.valueOf(currentTime), 0),
             Duration(BigInteger.valueOf(timeInterval), 0)
@@ -51,15 +52,17 @@ fun getTimeTrigger(timeInterval: Long): EventsFilterBox.Time {
     )
 }
 
-fun getDataTriggerByAccountMetadataInserted(accountId: AccountId? = null): EventsFilterBox.Data {
-    var accountEvent: OriginFilterAccountEvent? = null
+fun getDataTriggerByAccountMetadataInserted(accountId: AccountId? = null): TriggeringFilterBox.Data {
+    var accountEvent: OriginFilterOfAccountEvent? = null
     if (accountId != null) {
-        accountEvent = OriginFilterAccountEvent(accountId)
+        accountEvent = OriginFilterOfAccountEvent(accountId)
     }
-    return Filters.data(
-        EntityFilters.byAccount(
-            idFilter = accountEvent,
-            eventFilter = AccountEventFilter.ByMetadataInserted()
+    return TriggeringFilterBox.Data(
+        FilterOptOfDataEntityFilter.BySome(
+            EntityFilters.byAccount(
+                idFilter = accountEvent,
+                eventFilter = AccountEventFilter.ByMetadataInserted()
+            )
         )
     )
 }

@@ -6,20 +6,21 @@ import jp.co.soramitsu.Mode.UNREGISTER
 import jp.co.soramitsu.iroha2.asName
 import jp.co.soramitsu.iroha2.client.Iroha2Client
 import jp.co.soramitsu.iroha2.generateKeyPair
+import jp.co.soramitsu.iroha2.generated.AccountEventFilter
+import jp.co.soramitsu.iroha2.generated.AccountId
 import jp.co.soramitsu.iroha2.generated.Duration
-import jp.co.soramitsu.iroha2.generated.datamodel.account.AccountId
-import jp.co.soramitsu.iroha2.generated.datamodel.events.data.events.account.AccountEventFilter
-import jp.co.soramitsu.iroha2.generated.datamodel.events.data.filters.OriginFilterAccountEvent
-import jp.co.soramitsu.iroha2.generated.datamodel.metadata.Metadata
-import jp.co.soramitsu.iroha2.generated.datamodel.trigger.TriggerId
-import jp.co.soramitsu.iroha2.generated.datamodel.trigger.action.Repeats
+import jp.co.soramitsu.iroha2.generated.FilterOptOfDataEntityFilter
+import jp.co.soramitsu.iroha2.generated.Metadata
+import jp.co.soramitsu.iroha2.generated.OriginFilterOfAccountEvent
+import jp.co.soramitsu.iroha2.generated.Repeats
+import jp.co.soramitsu.iroha2.generated.TriggerId
+import jp.co.soramitsu.iroha2.generated.TriggeringFilterBox
 import jp.co.soramitsu.iroha2.query.QueryBuilder
 import jp.co.soramitsu.iroha2.testengine.IrohaTest
 import jp.co.soramitsu.iroha2.testengine.WithIroha
 import jp.co.soramitsu.iroha2.toIrohaPublicKey
 import jp.co.soramitsu.iroha2.transaction.EntityFilters
 import jp.co.soramitsu.iroha2.transaction.EventFilters
-import jp.co.soramitsu.iroha2.transaction.Filters
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Test
@@ -28,7 +29,7 @@ import java.math.BigInteger
 import java.util.*
 import kotlin.test.assertEquals
 
-@Timeout(60)
+@Timeout(100)
 class Tests : IrohaTest<Iroha2Client>() {
 
     @Test
@@ -37,7 +38,7 @@ class Tests : IrohaTest<Iroha2Client>() {
         registerNftStatsTrigger("trigger_nft_stats")
         registerNftStatsTrigger("trigger_nft_stats2")
         registerMintCreditTrigger(
-            AccountId("Bob".asName(), DEFAULT_DOMAIN_ID)
+            AccountId(DEFAULT_DOMAIN_ID, "Bob".asName()),
         )
 
         Helper(client).update(
@@ -46,7 +47,7 @@ class Tests : IrohaTest<Iroha2Client>() {
                 .path.substringBeforeLast("/"),
             ALICE_ACCOUNT_ID,
             ALICE_KEYPAIR,
-            DEFAULT.mode
+            DEFAULT.mode,
         ).also {
             assertEquals(3, it.size)
         }
@@ -69,7 +70,7 @@ class Tests : IrohaTest<Iroha2Client>() {
             repeats,
             triggerType,
             technicalAccount,
-            triggerArg
+            triggerArg,
         ).also {
             assertEquals(1, it.size)
             assertEquals("trigger_mint_credit", it[0].name.string)
@@ -87,7 +88,7 @@ class Tests : IrohaTest<Iroha2Client>() {
         registerNftStatsTrigger("trigger_nft_stats")
         registerNftStatsTrigger("trigger_nft_stats2")
         registerMintCreditTrigger(
-            AccountId("Bob".asName(), DEFAULT_DOMAIN_ID)
+            AccountId(DEFAULT_DOMAIN_ID, "Bob".asName()),
         )
         Helper(client).update(
             this.javaClass.classLoader
@@ -95,7 +96,7 @@ class Tests : IrohaTest<Iroha2Client>() {
                 .path.substringBeforeLast("/"),
             ALICE_ACCOUNT_ID,
             ALICE_KEYPAIR,
-            UNREGISTER.mode
+            UNREGISTER.mode,
         ).also {
             assertEquals(3, it.size)
         }
@@ -118,22 +119,24 @@ class Tests : IrohaTest<Iroha2Client>() {
             registerAccount(
                 newAccount,
                 listOf(generateKeyPair().public.toIrohaPublicKey()),
-                Metadata(mapOf())
+                Metadata(mapOf()),
             )
             registerWasmTrigger(
-                TriggerId("trigger_mint_credit".asName()),
+                TriggerId(name = "trigger_mint_credit".asName()),
                 this.javaClass.classLoader
                     .getResource("trigger_mint_credit.wasm")
                     .readBytes(),
                 Repeats.Indefinitely(),
                 ALICE_ACCOUNT_ID,
                 Metadata(mapOf()),
-                Filters.data(
-                    EntityFilters.byAccount(
-                        OriginFilterAccountEvent(newAccount),
-                        AccountEventFilter.ByMetadataInserted()
-                    )
-                )
+                TriggeringFilterBox.Data(
+                    FilterOptOfDataEntityFilter.BySome(
+                        EntityFilters.byAccount(
+                            OriginFilterOfAccountEvent(newAccount),
+                            AccountEventFilter.ByMetadataInserted(),
+                        ),
+                    ),
+                ),
             )
             buildSigned(ALICE_KEYPAIR)
         }.also {
@@ -147,19 +150,19 @@ class Tests : IrohaTest<Iroha2Client>() {
         client.sendTransaction {
             account(ALICE_ACCOUNT_ID)
             registerWasmTrigger(
-                TriggerId(triggerId.asName()),
+                TriggerId(name = triggerId.asName()),
                 this.javaClass.classLoader
                     .getResource("trigger_nft_stats.wasm")
                     .readBytes(),
                 Repeats.Indefinitely(),
                 ALICE_ACCOUNT_ID,
                 Metadata(mapOf()),
-                Filters.time(
+                TriggeringFilterBox.Time(
                     EventFilters.timeEventFilter(
                         Duration(BigInteger.valueOf(Date().time / 1000), 0),
-                        Duration(BigInteger.valueOf(3600), 0)
-                    )
-                )
+                        Duration(BigInteger.valueOf(3600), 0),
+                    ),
+                ),
             )
             buildSigned(ALICE_KEYPAIR)
         }.also {

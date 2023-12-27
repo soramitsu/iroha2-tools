@@ -10,7 +10,7 @@ import jp.co.soramitsu.iroha2.asStringWithJson
 import jp.co.soramitsu.iroha2.generated.AssetId
 import jp.co.soramitsu.iroha2.generated.AssetValue
 import jp.co.soramitsu.iroha2.generated.AssetValueType
-import jp.co.soramitsu.iroha2.generated.InstructionBox
+import jp.co.soramitsu.iroha2.generated.InstructionExpr
 import jp.co.soramitsu.iroha2.generated.PermissionToken
 import jp.co.soramitsu.iroha2.generated.RawGenesisBlock
 import jp.co.soramitsu.iroha2.generated.RoleId
@@ -31,7 +31,7 @@ open class DefaultGenesis : Genesis(rawGenesisBlock()) {
     }
 }
 
-fun rawGenesisBlock(vararg isi: InstructionBox) = RawGenesisBlock(
+fun rawGenesisBlock(vararg isi: InstructionExpr) = RawGenesisBlock(
     listOf(
         Instructions.registerDomain(DEFAULT_DOMAIN_ID),
         Instructions.registerAccount(BOB_ACCOUNT_ID, listOf(BOB_KEYPAIR.public.toIrohaPublicKey())),
@@ -43,27 +43,27 @@ fun rawGenesisBlock(vararg isi: InstructionBox) = RawGenesisBlock(
             BOB_ROLE_ID,
             PermissionToken(
                 Permissions.CanSetKeyValueInUserAccount.type,
-                BOB_ACCOUNT_ID.asJsonString().asStringWithJson()
+                BOB_ACCOUNT_ID.asJsonString().asStringWithJson(),
             ),
             PermissionToken(
                 Permissions.CanRemoveKeyValueInUserAccount.type,
-                BOB_ACCOUNT_ID.asJsonString().asStringWithJson()
-            )
+                BOB_ACCOUNT_ID.asJsonString().asStringWithJson(),
+            ),
         ),
         Instructions.grantRole(BOB_ROLE_ID, ALICE_ACCOUNT_ID),
         Instructions.registerRole(
             ALICE_ROLE_ID,
             PermissionToken(
                 Permissions.CanSetKeyValueInUserAccount.type,
-                ALICE_ACCOUNT_ID.asJsonString().asStringWithJson()
+                ALICE_ACCOUNT_ID.asJsonString().asStringWithJson(),
             ),
             PermissionToken(
                 Permissions.CanRemoveKeyValueInUserAccount.type,
-                ALICE_ACCOUNT_ID.asJsonString().asStringWithJson()
-            )
+                ALICE_ACCOUNT_ID.asJsonString().asStringWithJson(),
+            ),
         ),
-        Instructions.grantRole(ALICE_ROLE_ID, BOB_ACCOUNT_ID)
+        Instructions.grantRole(ALICE_ROLE_ID, BOB_ACCOUNT_ID),
 
     ).let { listOf(it) },
-    Genesis.validatorMode
+    Genesis.executorMode,
 )
