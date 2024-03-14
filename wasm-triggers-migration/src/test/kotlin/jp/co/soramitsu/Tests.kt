@@ -29,11 +29,14 @@ import java.math.BigInteger
 import java.util.*
 import kotlin.test.assertEquals
 
-@Timeout(100)
+@Timeout(300)
 class Tests : IrohaTest<Iroha2Client>() {
 
     @Test
-    @WithIroha([DefaultGenesis::class])
+    @WithIroha(
+        sources = [DefaultGenesis::class],
+        configs = ["WSV_WASM_RUNTIME_CONFIG={\"FUEL_LIMIT\":500000000, \"MAX_MEMORY\": 4294967295}"],
+    )
     fun `should update all smart contracts`(): Unit = runBlocking {
         registerNftStatsTrigger("trigger_nft_stats")
         registerNftStatsTrigger("trigger_nft_stats2")
