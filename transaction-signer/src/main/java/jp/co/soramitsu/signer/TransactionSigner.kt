@@ -39,7 +39,7 @@ fun sign(args: Array<String>) {
     val keyPair = keyPairFromHex(
         publicKey,
         privateKey,
-        EdDSANamedCurveTable.getByName(EdDSANamedCurveTable.ED_25519)
+        EdDSANamedCurveTable.getByName(EdDSANamedCurveTable.ED_25519),
     )
     val decodedTransaction = transaction.let { SignedTransaction.decode(it) }
     val signedTransaction = decodedTransaction.appendSignatures(keyPair)
